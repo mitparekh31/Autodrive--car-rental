@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Reservations - AutoDrive{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 text-white fw-bold mb-1"><i class="fa-regular fa-calendar-check text-info me-2"></i> My Reservations & Bookings</h1>
+            <p class="text-secondary mb-0">Track real-time status and digital receipts for your active rentals.</p>
+        </div>
+        <a href="{% url 'fleet_list' %}" class="btn-primary-autodrive py-2 px-3 fs-6">
+            <i class="fa-solid fa-plus me-1"></i> Book Another Vehicle
+        </a>
+    </div>
+
+    {% if bookings %}
+    <div class="row g-4">
+        {% for b in bookings %}
+        <div class="col-lg-6">
+            <div class="p-4 rounded-4 glass-panel h-100 d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom border-secondary">
+                    <div>
+                        <span class="badge bg-primary mb-1 text-white">REF #{{ b.booking_ref }}</span>
+                        <h3 class="h5 text-white fw-bold mb-0">{{ b.car.name }}</h3>
+                        <div class="text-secondary small">{{ b.car.category.name }} &bull; {{ b.car.year }}</div>
+                    </div>
+                    <div>
+                        {% if b.status == 'CONFIRMED' %}
+                            <span class="badge bg-success p-2 px-3 text-white"><i class="fa-solid fa-circle-check me-1"></i> Confirmed</span>
+                        {% elif b.status == 'COMPLETED' %}
+                            <span class="badge bg-info p-2 px-3 text-white"><i class="fa-solid fa-flag-checkered me-1"></i> Completed</span>
+                        {% else %}
+                            <span class="badge bg-danger p-2 px-3 text-white"><i class="fa-solid fa-ban me-1"></i> Cancelled</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row g-3 align-items-center mb-3">
+                    <div class="col-4">
+                        <img src="{{ b.car.primary_image }}" alt="{{ b.car.name }}" class="w-100 rounded-3 object-fit-cover" style="height: 95px;">
+                    </div>
+                    <div class="col-8">
+                        <div class="small text-secondary mb-1"><i class="fa-regular fa-calendar me-1 text-primary"></i> <strong>Dates:</strong> {{ b.start_date|date:"M d, Y" }} &rarr; {{ b.end_date|date:"M d, Y" }}</div>
+                        <div class="small text-secondary mb-1"><i class="fa-regular fa-clock me-1 text-primary"></i> <strong>Time:</strong> {{ b.pickup_time }}</div>
+                        <div class="small text-secondary mb-1"><i class="fa-solid fa-location-dot me-1 text-danger"></i> <strong>Pick-Up:</strong> {{ b.pickup_location }}</div>
+                        <div class="small text-secondary mb-0"><i class="fa-solid fa-location-crosshairs me-1 text-info"></i> <strong>Drop-Off:</strong> {{ b.return_location }}</div>
+                    </div>
+                </div>
+
+                <!-- Price Breakdown -->
+                <div class="p-3 rounded-3 bg-dark border border-secondary mb-3 mt-auto">
+                    <div class="d-flex justify-content-between small text-secondary mb-1">
+                        <span>Rental Duration:</span>
+                        <span class="text-white fw-semibold">{{ b.num_days }} day{% if b.num_days > 1 %}s{% endif %}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-2 mt-2 border-top border-secondary">
+                        <span class="fw-bold text-white">Total Amount Paid:</span>
+                        <span class="h4 text-info fw-bold mb-0">₹{{ b.total_price|floatformat:0 }}</span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <button class="btn btn-outline-info btn-sm rounded-3 btn-view-receipt text-info" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#receiptModal"
+                            data-ref="{{ b.booking_ref }}"
+                            data-car="{{ b.car.name }}"
+                            data-start="{{ b.start_date|date:'M d, Y' }}"
+                            data-end="{{ b.end_date|date:'M d, Y' }}"
+                            data-days="{{ b.num_days }}"
+                            data-hub="{{ b.pickup_location }}"
+                            data-return="{{ b.return_location }}"
+                            data-driver="{{ b.driver_name }}"
+                            data-email="{{ b.driver_email }}"
+                            data-subtotal="{{ b.subtotal|floatformat:0 }}"
+                            data-total="{{ b.total_price|floatformat:0 }}">
+                        <i class="fa-solid fa-receipt me-1"></i> Digital Pass / Receipt
+                    </button>
+
+                    {% if b.status == 'CONFIRMED' %}
+                    <form method="POST" action="{% url 'cancel_booking' b.id %}" onsubmit="return confirm('Are you sure you want to cancel this reservation?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-3 text-danger">
+                            <i class="fa-solid fa-xmark me-1"></i> Cancel Reservation
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-5 rounded-4 glass-panel text-center">
+        <i class="fa-regular fa-calendar-xmark fs-1 text-secondary mb-3"></i>
+        <h3 class="h4 text-white fw-bold">No active reservations found</h3>
+        <p class="text-secondary">You haven't reserved any vehicles yet. Explore our fleet catalog to book your dream ride.</p>
+        <a href="{% url 'fleet_list' %}" class="btn-primary-autodrive py-2 px-4 mt-2">Browse Fleet Catalog</a>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Digital Pass / Receipt Modal -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-receipt-card p-2">
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="brand-logo-box" style="width: 34px; height: 34px; font-size: 1rem;">
+                        <i class="fa-solid fa-car-side"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title text-white fw-bold h6 mb-0">AutoDrive Digital Pass</h5>
+                        <div class="text-secondary" style="font-size: 0.65rem;">VERIFIED RESERVATION VOUCHER</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center my-3">
+                    <div class="receipt-stamp-badge mb-2">VERIFIED & CONFIRMED</div>
+                    <div class="h4 text-info fw-bold mb-0" id="receipt_ref">#AD-00000000</div>
+                </div>
+
+                <div class="p-3 rounded-3 bg-dark border border-secondary mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary small">Vehicle Reserved:</span>
+                        <span class="text-white fw-bold small" id="receipt_car_name">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary small">Rental Period:</span>
+                        <span class="text-white small" id="receipt_dates">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary small">Pickup Location:</span>
+                        <span class="text-white small" id="receipt_hub">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary small">Drop-off Location:</span>
+                        <span class="text-white small" id="receipt_return">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary small">Registered Driver:</span>
+                        <span class="text-white small" id="receipt_driver">-</span>
+                    </div>
+                </div>
+
+                <div class="p-3 rounded-3 bg-dark border border-secondary">
+                    <div class="d-flex justify-content-between small text-secondary mb-1">
+                        <span>Base Subtotal:</span>
+                        <span class="text-white" id="receipt_subtotal">₹0</span>
+                    </div>
+                    <hr class="border-secondary my-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-white">Grand Total Paid:</span>
+                        <span class="h4 text-info fw-bold mb-0" id="receipt_total">₹0</span>
+                    </div>
+                </div>
+
+                <div class="text-center mt-3 text-secondary small">
+                    <i class="fa-solid fa-qrcode fs-1 text-info mb-1"></i>
+                    <div>Show this pass to dispatch concierge at pickup.</div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary w-100 py-2 border-secondary text-white" data-bs-dismiss="modal">Close Pass</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

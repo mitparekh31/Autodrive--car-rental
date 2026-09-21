@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Compare Vehicle Specs - AutoDrive{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 text-white fw-bold mb-1"><i class="fa-solid fa-scale-balanced text-warning me-2"></i> Side-by-Side Model Comparison</h1>
+            <p class="text-muted mb-0">Evaluate performance, horsepower, 0-60 times, seating, and daily rental rates across fleet models.</p>
+        </div>
+    </div>
+
+    <!-- Selection Bar Card -->
+    <div class="p-4 rounded-4 glass-panel mb-4">
+        <form method="GET" action="{% url 'compare' %}">
+            <label class="form-label text-white fw-bold mb-3"><i class="fa-solid fa-list-check text-info me-1"></i> Select Vehicles to Compare Matrix:</label>
+            <div class="row g-3">
+                {% for car in all_cars %}
+                <div class="col-lg-3 col-md-4 col-6">
+                    <div class="form-check p-2 px-3 rounded-3 bg-dark border border-secondary hover-glow">
+                        <input class="form-check-input" type="checkbox" name="car_ids" value="{{ car.id }}" id="car_chk_{{ car.id }}" {% if car.id in selected_ids %}checked{% endif %}>
+                        <label class="form-check-label text-white small fw-semibold text-truncate d-block" for="car_chk_{{ car.id }}">
+                            {{ car.make }} {{ car.model }}
+                        </label>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-3 text-end">
+                <button type="submit" class="btn-primary-autodrive py-2 px-4 fs-6">
+                    Update Matrix <i class="fa-solid fa-rotate ms-1"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Comparison Table -->
+    {% if cars_to_compare %}
+    <div class="table-responsive rounded-4 border border-secondary shadow-lg">
+        <table class="table table-compare mb-0 text-center">
+            <thead>
+                <tr>
+                    <th class="text-start bg-dark"><i class="fa-solid fa-sliders text-info me-1"></i> Vehicle Specification</th>
+                    {% for car in cars_to_compare %}
+                    <th style="min-width: 220px;" class="bg-dark">
+                        <div class="mb-2" style="height: 120px;">
+                            <img src="{{ car.primary_image }}" alt="{{ car.name }}" class="w-100 h-100 object-fit-cover rounded-3">
+                        </div>
+                        <div class="h6 text-white fw-bold mb-1">{{ car.name }}</div>
+                        <div class="text-info fw-bold fs-5">₹{{ car.daily_rate|floatformat:0 }} <span class="small text-muted fs-6">/ day</span></div>
+                        <a href="{% url 'car_detail' car.id %}" class="btn-primary-autodrive py-1 px-3 fs-6 mt-2 w-100 justify-content-center">Reserve</a>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th class="text-start"><i class="fa-solid fa-list text-primary me-2"></i> Category</th>
+                    {% for car in cars_to_compare %}
+                    <td class="text-white">{{ car.category.name }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="text-start"><i class="fa-solid fa-gauge-high text-info me-2"></i> Horsepower</th>
+                    {% for car in cars_to_compare %}
+                    <td class="fw-bold text-info fs-5">{{ car.horsepower }} HP</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="text-start"><i class="fa-solid fa-stopwatch text-warning me-2"></i> Acceleration (0-60 mph)</th>
+                    {% for car in cars_to_compare %}
+                    <td class="fw-bold text-white fs-6">{{ car.zero_to_sixty }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="text-start"><i class="fa-solid fa-tachometer text-danger me-2"></i> Top Speed</th>
+                    {% for car in cars_to_compare %}
+                    <td class="text-white">{{ car.top_speed }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="text-start"><i class="fa-solid fa-users text-primary me-2"></i> Seating Capacity</th>
+                    {% for car in cars_to_compare %}
+                    <td class="text-white">{{ car.seats }} Seats</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="text-start"><i class="fa-solid fa-charging-station text-success me-2"></i> Powertrain</th>
+                    {% for car in cars_to_compare %}
+                    <td class="text-white">{{ car.fuel_type }} ({{ car.transmission }})</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="text-start"><i class="fa-solid fa-suitcase text-info me-2"></i> Luggage Capacity</th>
+                    {% for car in cars_to_compare %}
+                    <td class="text-white">{{ car.luggage_capacity }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="text-start"><i class="fa-solid fa-shield-check text-success me-2"></i> Availability</th>
+                    {% for car in cars_to_compare %}
+                    <td><span class="badge bg-success p-2">100% Real-Time Guaranteed</span></td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="p-5 rounded-4 glass-panel text-center text-muted">
+        <i class="fa-solid fa-circle-exclamation fs-1 text-secondary mb-3"></i>
+        <p class="text-white h5">Please select at least 1 vehicle above to generate the comparison matrix.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

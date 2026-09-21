@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ car.name }} - AutoDrive Reserve{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Back button -->
+    <a href="{% url 'fleet_list' %}" class="btn-outline-autodrive py-2 px-3 fs-6 mb-4 d-inline-flex align-items-center gap-2">
+        <i class="fa-solid fa-arrow-left"></i> Back to Fleet Catalog
+    </a>
+
+    <div class="row g-4">
+        <!-- Left Specs, Features & Reviews Column -->
+        <div class="col-lg-7">
+            <div class="p-4 rounded-4 glass-panel mb-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <span class="badge bg-primary mb-2 px-3 py-2 fs-6 fw-bold text-white">{{ car.category.name }}</span>
+                        <h1 class="h2 text-white fw-bold mb-1">{{ car.name }}</h1>
+                        <div class="text-secondary small"><i class="fa-solid fa-calendar me-1 text-primary"></i> Model Year {{ car.year }} &bull; {{ car.make }}</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="h3 text-info fw-bold mb-0">₹{{ car.daily_rate|floatformat:0 }}</div>
+                        <div class="text-secondary small">per day</div>
+                    </div>
+                </div>
+
+                <div class="car-img-wrapper rounded-4 mb-4" style="height: 380px;">
+                    <img src="{{ car.primary_image }}" alt="{{ car.name }}" class="w-100 h-100 object-fit-cover">
+                    <span class="badge-availability"><i class="fa-solid fa-circle text-success me-1"></i> 100% Guaranteed Availability</span>
+                </div>
+
+                <!-- Vehicle Specifications Grid -->
+                <h3 class="h5 text-white fw-bold mb-3"><i class="fa-solid fa-sliders text-info me-2"></i> Vehicle Performance Specs</h3>
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-4">
+                        <div class="p-3 rounded-3 bg-dark border border-secondary">
+                            <div class="text-info small mb-1"><i class="fa-solid fa-gauge-high me-1"></i> Horsepower</div>
+                            <div class="fw-bold text-white fs-5">{{ car.horsepower }} HP</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="p-3 rounded-3 bg-dark border border-secondary">
+                            <div class="text-info small mb-1"><i class="fa-solid fa-stopwatch me-1"></i> 0-60 MPH</div>
+                            <div class="fw-bold text-white fs-5">{{ car.zero_to_sixty }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="p-3 rounded-3 bg-dark border border-secondary">
+                            <div class="text-info small mb-1"><i class="fa-solid fa-tachometer me-1"></i> Top Speed</div>
+                            <div class="fw-bold text-white fs-5">{{ car.top_speed }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="p-3 rounded-3 bg-dark border border-secondary">
+                            <div class="text-info small mb-1"><i class="fa-solid fa-users me-1"></i> Seating</div>
+                            <div class="fw-bold text-white fs-5">{{ car.seats }} Seats</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="p-3 rounded-3 bg-dark border border-secondary">
+                            <div class="text-info small mb-1"><i class="fa-solid fa-charging-station me-1"></i> Powertrain</div>
+                            <div class="fw-bold text-white fs-5">{{ car.fuel_type }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <div class="p-3 rounded-3 bg-dark border border-secondary">
+                            <div class="text-info small mb-1"><i class="fa-solid fa-suitcase me-1"></i> Luggage</div>
+                            <div class="fw-bold text-white fs-5">{{ car.luggage_capacity }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Premium Included Features -->
+                <h3 class="h5 text-white fw-bold mb-3"><i class="fa-solid fa-star text-warning me-2"></i> Premium Included Features</h3>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    {% for feat in car.get_features_list %}
+                        <span class="badge bg-secondary p-2 px-3 fw-semibold text-white"><i class="fa-solid fa-circle-check text-success me-1"></i> {{ feat }}</span>
+                    {% empty %}
+                        <span class="badge bg-secondary p-2 px-3 text-white">Full Self-Driving Autopilot</span>
+                        <span class="badge bg-secondary p-2 px-3 text-white">Panoramic Glass Canopy</span>
+                        <span class="badge bg-secondary p-2 px-3 text-white">Premium Surround Sound</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Customer Reviews Section -->
+            <div class="p-4 rounded-4 glass-panel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="h5 text-white fw-bold mb-0">
+                        <i class="fa-solid fa-comments text-primary me-2"></i> Driver Reviews ({{ reviews.count }})
+                    </h3>
+                </div>
+
+                <!-- Submit Review Form for Authenticated Users -->
+                {% if user.is_authenticated %}
+                <div class="p-3 rounded-4 bg-dark border border-secondary mb-4">
+                    <h4 class="h6 text-white fw-bold mb-2">Leave a Verified Review</h4>
+                    <form method="POST" action="{% url 'add_review' car.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="rating" id="ratingValueInput" value="5">
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-white small me-2">Your Rating:</label>
+                            <div class="star-rating-select d-inline-flex" id="starRatingSelector">
+                                <i class="fa-solid fa-star active" data-value="1"></i>
+                                <i class="fa-solid fa-star active" data-value="2"></i>
+                                <i class="fa-solid fa-star active" data-value="3"></i>
+                                <i class="fa-solid fa-star active" data-value="4"></i>
+                                <i class="fa-solid fa-star active" data-value="5"></i>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <textarea name="comment" class="form-control" rows="2" placeholder="Write your driving experience review..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-primary-autodrive py-2 px-4 fs-6">
+                            Submit Review <i class="fa-solid fa-paper-plane ms-1"></i>
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="p-3 rounded-3 bg-dark text-white small mb-4">
+                    <i class="fa-solid fa-lock me-1"></i> <a href="{% url 'login' %}?next={{ request.path }}" class="text-info text-decoration-none fw-bold">Log in</a> to post a review for this vehicle.
+                </div>
+                {% endif %}
+
+                <!-- Reviews Feed -->
+                <div class="d-flex flex-column gap-3">
+                    {% for rev in reviews %}
+                    <div class="p-3 rounded-3 bg-dark border border-secondary">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="fw-bold text-white small">
+                                <i class="fa-solid fa-user-circle text-info me-1"></i> {{ rev.user.username }}
+                            </div>
+                            <div class="text-warning small">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= rev.rating %}
+                                        <i class="fa-solid fa-star"></i>
+                                    {% else %}
+                                        <i class="fa-regular fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <p class="text-secondary small mb-1">{{ rev.comment }}</p>
+                        <div class="text-end text-secondary" style="font-size: 0.72rem;">{{ rev.created_at|date:"M d, Y" }}</div>
+                    </div>
+                    {% empty %}
+                    <div class="text-secondary small text-center py-3">No reviews yet. Be the first driver to review this vehicle!</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Instant Reservation Form Column -->
+        <div class="col-lg-5">
+            <div class="p-4 rounded-4 glass-panel position-sticky" style="top: 100px;">
+                <h2 class="h4 text-white fw-bold mb-3"><i class="fa-solid fa-bolt text-warning me-2"></i> Instant Reservation</h2>
+                
+                <form method="POST" action="{% url 'book_car' car.id %}">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label text-white small fw-bold">Pick-Up Date</label>
+                            <input type="date" id="start_date" name="start_date" class="form-control" required min="{{ today }}" value="{{ today }}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-white small fw-bold">Return Date</label>
+                            <input type="date" id="end_date" name="end_date" class="form-control" required min="{{ tomorrow }}" value="{{ tomorrow }}">
+                        </div>
+                    </div>
+
+                    <!-- Text box inputs for Pick-Up & Return Location -->
+                    <div class="mb-3">
+                        <label class="form-label text-white small fw-bold"><i class="fa-solid fa-location-dot text-danger me-1"></i> Pick-Up Location</label>
+                        <input type="text" name="pickup_location" class="form-control" placeholder="e.g. Mumbai Airport Terminal 2" value="Downtown Central Hub" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-white small fw-bold"><i class="fa-solid fa-location-crosshairs text-info me-1"></i> Drop-Off / Return Location</label>
+                        <input type="text" name="return_location" class="form-control" placeholder="e.g. Bandra Kurla Complex Depot" value="Downtown Central Hub" required>
+                    </div>
+
+                    <!-- Driver Contact Details Accordion -->
+                    <div class="mb-4">
+                        <a class="text-info small text-decoration-none fw-bold d-inline-flex align-items-center gap-1 mb-2" data-bs-toggle="collapse" href="#driverDetailsCollapse" role="button" aria-expanded="false">
+                            <i class="fa-solid fa-user-gear"></i> Driver Contact Details (Optional) <i class="fa-solid fa-chevron-down fs-6"></i>
+                        </a>
+                        <div class="collapse" id="driverDetailsCollapse">
+                            <div class="p-3 rounded-3 bg-dark border border-secondary">
+                                <div class="mb-2">
+                                    <label class="form-label text-white small mb-1">Driver Full Name</label>
+                                    <input type="text" name="driver_name" class="form-control form-control-sm" placeholder="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}John Driver{% endif %}">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-white small mb-1">Driver Email</label>
+                                    <input type="email" name="driver_email" class="form-control form-control-sm" placeholder="{% if user.is_authenticated %}{{ user.email|default:'driver@autodrive.io' }}{% else %}driver@autodrive.io{% endif %}">
+                                </div>
+                                <div>
+                                    <label class="form-label text-white small mb-1">Driver Phone Number</label>
+                                    <input type="text" name="driver_phone" class="form-control form-control-sm" placeholder="+91 98765 43210">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Calculation Breakdown -->
+                    <div class="p-3 rounded-3 bg-dark border border-secondary mb-4">
+                        <span id="daily_rate_val" data-rate="{{ car.daily_rate }}" class="d-none"></span>
+                        
+                        <div class="d-flex justify-content-between small text-secondary mb-2">
+                            <span>Duration:</span>
+                            <span id="est_num_days" class="text-white fw-bold">1 day</span>
+                        </div>
+                        <div class="d-flex justify-content-between small text-secondary mb-2">
+                            <span>Base Rate Subtotal:</span>
+                            <span id="est_subtotal" class="text-white fw-bold">₹{{ car.daily_rate|floatformat:0 }}</span>
+                        </div>
+
+                        <hr class="border-secondary my-2">
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-white fs-5">Total Reservation Amount:</span>
+                            <span id="est_grand_total" class="h3 text-info fw-bold mb-0">₹{{ car.daily_rate|floatformat:0 }}</span>
+                        </div>
+                    </div>
+
+                    {% if user.is_authenticated %}
+                        <button type="submit" class="btn-primary-autodrive w-100 py-3 justify-content-center fs-5">
+                            Confirm Instant Booking <i class="fa-solid fa-bolt ms-1"></i>
+                        </button>
+                    {% else %}
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="btn-primary-autodrive w-100 py-3 justify-content-center fs-5">
+                            Log In to Reserve <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
+                        </a>
+                        <p class="small text-secondary text-center mt-2 mb-0">No account? Register in 10 seconds.</p>
+                    {% endif %}
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AutoDrive - Rent Your Dream Car | Automotive SaaS{% endblock %}</title>
+    <meta name="description" content="AutoDrive Automotive SaaS: Premium luxury fleet rental with real-time guaranteed availability and dynamic duration discounts.">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" crossorigin="anonymous">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap">
+    <!-- Custom Glassmorphism Theme CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Header Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-autodrive">
+        <div class="container-fluid max-width-container px-lg-4">
+            <!-- Brand Logo -->
+            <a class="navbar-brand d-flex align-items-center gap-3 text-decoration-none" href="{% url 'home' %}">
+                <div class="brand-logo-box">
+                    <i class="fa-solid fa-car-side"></i>
+                </div>
+                <div>
+                    <h1 class="brand-title">AutoDrive</h1>
+                    <div class="brand-subtitle">AUTOMOTIVE SAAS</div>
+                </div>
+            </a>
+
+            <button class="navbar-toggler text-white border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <i class="fa-solid fa-bars fs-4 text-white"></i>
+            </button>
+
+            <!-- Navigation Links -->
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-lg-2">
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">
+                            <i class="fa-solid fa-house text-primary"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'fleet_list' %}active{% endif %}" href="{% url 'fleet_list' %}">
+                            <i class="fa-solid fa-car text-info"></i> Cars / Fleet
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'compare' %}active{% endif %}" href="{% url 'compare' %}">
+                            <i class="fa-solid fa-scale-balanced text-warning"></i> Compare
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link-custom {% if request.resolver_match.url_name == 'my_bookings' %}active{% endif %}" href="{% url 'my_bookings' %}">
+                            <i class="fa-regular fa-calendar-check text-success"></i> My Bookings
+                        </a>
+                    </li>
+                    {% if user.is_staff or user.is_superuser %}
+                    <li class="nav-item">
+                        <a class="nav-link-custom text-warning" href="{% url 'admin_dashboard' %}">
+                            <i class="fa-solid fa-shield-halved"></i> Admin Panel
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <!-- Auth / Profile Area -->
+                <div class="d-flex align-items-center gap-3">
+                    {% if user.is_authenticated %}
+                        <div class="user-profile-badge">
+                            <div class="avatar-initials">
+                                {{ user.username|slice:":2"|upper }}
+                            </div>
+                            <div>
+                                <div class="user-meta-name">{{ user.username }}</div>
+                                <div class="user-meta-sub">VIP Driver Member</div>
+                            </div>
+                            <a href="{% url 'logout' %}" class="btn-logout-pill ms-2" title="Log Out">
+                                <i class="fa-solid fa-right-from-bracket me-1"></i> Log Out
+                            </a>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn-outline-autodrive py-2 px-3 fs-6">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> Log In
+                        </a>
+                        <a href="{% url 'register' %}" class="btn-primary-autodrive py-2 px-3 fs-6">
+                            <i class="fa-solid fa-user-plus"></i> Register
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Notifications -->
+    {% if messages %}
+        <div class="container my-3">
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show glass-panel text-white border-secondary mb-2" role="alert">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check text-success{% elif message.tags == 'error' %}fa-triangle-exclamation text-danger{% else %}fa-circle-info text-info{% endif %} fs-5"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container py-4">
+            <div class="row gy-4">
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="brand-logo-box">
+                            <i class="fa-solid fa-car-side"></i>
+                        </div>
+                        <div>
+                            <h2 class="brand-title h4">AutoDrive</h2>
+                            <div class="brand-subtitle">AUTOMOTIVE SAAS</div>
+                        </div>
+                    </div>
+                    <p class="text-muted small">
+                        Next-generation automotive SaaS & luxury fleet rental platform. Guaranteed real-time availability, dynamic duration discounts, and instant AI booking dispatch.
+                    </p>
+                </div>
+                <div class="col-lg-2 col-6">
+                    <h5 class="text-white h6 mb-3 fw-bold">Quick Links</h5>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2"><a href="{% url 'home' %}" class="text-muted text-decoration-none">Home Page</a></li>
+                        <li class="mb-2"><a href="{% url 'fleet_list' %}" class="text-muted text-decoration-none">Entire Fleet Catalog</a></li>
+                        <li class="mb-2"><a href="{% url 'compare' %}" class="text-muted text-decoration-none">Compare Models</a></li>
+                        <li class="mb-2"><a href="{% url 'my_bookings' %}" class="text-muted text-decoration-none">My Reservations</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <h5 class="text-white h6 mb-3 fw-bold">Guarantees</h5>
+                    <ul class="list-unstyled small text-muted">
+                        <li class="mb-2"><i class="fa-solid fa-circle-check text-success me-2"></i> 100% Guaranteed Availability</li>
+                        <li class="mb-2"><i class="fa-solid fa-shield-halved text-info me-2"></i> Zero Double-Booking System</li>
+                        <li class="mb-2"><i class="fa-solid fa-tag text-warning me-2"></i> Up to 25% Duration Discounts</li>
+                    </ul>
+                </div>
+                <div class="col-lg-3">
+                    <h5 class="text-white h6 mb-3 fw-bold">Concierge Support</h5>
+                    <p class="small text-muted mb-2"><i class="fa-solid fa-headset me-2 text-primary"></i> 24/7 VIP Support Desk</p>
+                    <p class="small text-muted mb-0"><i class="fa-solid fa-envelope me-2 text-primary"></i> concierge@autodrive.io</p>
+                </div>
+            </div>
+            <hr class="border-secondary my-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center small text-muted">
+                <div>&copy; 2026 AutoDrive Automotive SaaS Inc. All rights reserved.</div>
+                <div class="mt-2 mt-md-0">
+                    <span class="me-3">Terms of Service</span>
+                    <span class="me-3">Privacy Guarantee</span>
+                    <span>Fleet Policy</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <!-- Custom JS -->
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

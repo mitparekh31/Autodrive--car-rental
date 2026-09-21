@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cars & Fleet Inventory - AutoDrive{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Header & Search Bar -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h1 class="h2 text-white fw-bold mb-1">Cars & Fleet Inventory</h1>
+            <p class="text-secondary mb-0">Browse real-time guaranteed availability luxury sedans, electric supercars, solo track bikes, and VIP vans.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            {% if user.is_staff or user.is_superuser %}
+            <button type="button" class="btn btn-warning py-2 px-3 fw-bold rounded-3 text-dark" data-bs-toggle="modal" data-bs-target="#addCarModal">
+                <i class="fa-solid fa-plus me-1"></i> Add New Vehicle
+            </button>
+            {% endif %}
+            <a href="{% url 'compare' %}" class="btn-outline-autodrive py-2 px-3 fs-6">
+                <i class="fa-solid fa-scale-balanced text-warning me-1"></i> Compare Selected
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Bar Card -->
+    <div class="p-4 rounded-4 glass-panel mb-4 shadow-sm">
+        <form method="GET" action="{% url 'fleet_list' %}" class="row g-3 align-items-end">
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label text-white small fw-bold">Search Model or Brand</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-white"><i class="fa-solid fa-magnifying-glass text-info"></i></span>
+                    <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="e.g. Porsche, Tesla, Ducati...">
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label text-white small fw-bold">Category</label>
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.slug }}" {% if selected_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-lg-2 col-md-4">
+                <label class="form-label text-white small fw-bold">Powertrain</label>
+                <select name="fuel" class="form-select">
+                    <option value="">All Types</option>
+                    <option value="Electric" {% if selected_fuel == 'Electric' %}selected{% endif %}>Electric</option>
+                    <option value="Gasoline" {% if selected_fuel == 'Gasoline' %}selected{% endif %}>Gasoline</option>
+                    <option value="Hybrid" {% if selected_fuel == 'Hybrid' %}selected{% endif %}>Hybrid</option>
+                </select>
+            </div>
+
+            <div class="col-lg-2 col-md-4">
+                <label class="form-label text-white small fw-bold">Sort By</label>
+                <select name="sort" class="form-select">
+                    <option value="default" {% if sort_by == 'default' %}selected{% endif %}>Featured First</option>
+                    <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="power" {% if sort_by == 'power' %}selected{% endif %}>Highest Horsepower</option>
+                </select>
+            </div>
+
+            <div class="col-lg-2 col-md-4 d-flex gap-2">
+                <button type="submit" class="btn-primary-autodrive py-2 w-100 justify-content-center">
+                    Filter <i class="fa-solid fa-sliders ms-1"></i>
+                </button>
+                <a href="{% url 'fleet_list' %}" class="btn btn-outline-secondary py-2 px-3 border-secondary text-white" title="Reset Filters"><i class="fa-solid fa-rotate-left"></i></a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Active Filter Tags -->
+    {% if query or selected_category or selected_fuel or sort_by != 'default' %}
+    <div class="mb-4 d-flex align-items-center gap-2 flex-wrap">
+        <span class="text-white small fw-bold">Active Filters:</span>
+        {% if query %}
+            <span class="badge bg-secondary p-2 px-3 text-white">Search: "{{ query }}"</span>
+        {% endif %}
+        {% if selected_category %}
+            <span class="badge bg-primary p-2 px-3 text-white">Category: {{ selected_category }}</span>
+        {% endif %}
+        {% if selected_fuel %}
+            <span class="badge bg-info p-2 px-3 text-white">Fuel: {{ selected_fuel }}</span>
+        {% endif %}
+        <a href="{% url 'fleet_list' %}" class="text-danger small text-decoration-none ms-2"><i class="fa-solid fa-xmark me-1"></i> Clear All</a>
+    </div>
+    {% endif %}
+
+    <!-- Fleet Inventory Grid -->
+    <div class="row g-4">
+        {% for car in cars %}
+        <div class="col-lg-4 col-md-6">
+            <div class="car-card">
+                <div class="car-img-wrapper">
+                    <img src="{{ car.primary_image }}" alt="{{ car.name }}">
+                    <span class="badge-availability">
+                        <i class="fa-solid fa-circle text-success me-1"></i> Available Now
+                    </span>
+                    <span class="badge-category">{{ car.category.name }}</span>
+                </div>
+                <div class="car-card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h3 class="car-title mb-0">{{ car.name }}</h3>
+                        <span class="badge bg-secondary text-white">{{ car.year }}</span>
+                    </div>
+                    <div class="car-tagline">{{ car.tagline }}</div>
+
+                    <div class="specs-grid">
+                        <div class="spec-item"><i class="fa-solid fa-gauge-high"></i> {{ car.horsepower }} HP</div>
+                        <div class="spec-item"><i class="fa-solid fa-stopwatch"></i> 0-60: {{ car.zero_to_sixty }}</div>
+                        <div class="spec-item"><i class="fa-solid fa-users"></i> {{ car.seats }} Seats</div>
+                        <div class="spec-item"><i class="fa-solid fa-charging-station"></i> {{ car.fuel_type }}</div>
+                        <div class="spec-item"><i class="fa-solid fa-gears"></i> {{ car.transmission }}</div>
+                        <div class="spec-item"><i class="fa-solid fa-tachograph-digital"></i> {{ car.top_speed }}</div>
+                    </div>
+
+                    <div class="car-price-box">
+                        <div>
+                            <span class="price-val">₹{{ car.daily_rate|floatformat:0 }}</span>
+                            <span class="price-period">/ day</span>
+                        </div>
+                        <a href="{% url 'car_detail' car.id %}" class="btn-primary-autodrive py-2 px-3 fs-6">
+                            Reserve <i class="fa-solid fa-chevron-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 py-5 text-center text-muted">
+            <i class="fa-solid fa-car-rear fs-1 text-secondary mb-3"></i>
+            <h3 class="h4 text-white fw-bold">No cars found matching criteria</h3>
+            <p class="text-secondary">Try clearing filters or searching for another vehicle brand.</p>
+            <a href="{% url 'fleet_list' %}" class="btn-primary-autodrive py-2 px-4 mt-2">View All Fleet</a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Admin Add New Vehicle Modal (File Upload Enctype) -->
+{% if user.is_staff or user.is_superuser %}
+<div class="modal fade" id="addCarModal" tabindex="-1" aria-labelledby="addCarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content modal-receipt-card p-3">
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="brand-logo-box bg-warning text-dark" style="width: 36px; height: 36px; font-size: 1.1rem;">
+                        <i class="fa-solid fa-car-side"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title text-white fw-bold h6 mb-0" id="addCarModalLabel">Add New Vehicle to Fleet</h5>
+                        <div class="text-secondary" style="font-size: 0.7rem;">FLEET MANAGER CONSOLE</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form method="POST" action="{% url 'add_car' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-white small fw-bold">Vehicle Display Name *</label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Porsche 911 GT3 RS" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-white small fw-bold">Make / Brand *</label>
+                            <input type="text" name="make" class="form-control" placeholder="e.g. Porsche" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-white small fw-bold">Model *</label>
+                            <input type="text" name="model" class="form-control" placeholder="e.g. GT3 RS" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label text-white small fw-bold">Category *</label>
+                            <select name="category" class="form-select" required>
+                                {% for cat in categories %}
+                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-white small fw-bold">Daily Rate (₹) *</label>
+                            <input type="number" step="100" name="daily_rate" class="form-control" placeholder="e.g. 7999" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-white small fw-bold">Model Year</label>
+                            <input type="number" name="year" class="form-control" value="2025" required>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label text-white small fw-bold">Horsepower (HP)</label>
+                            <input type="number" name="horsepower" class="form-control" placeholder="e.g. 525" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-white small fw-bold">0-60 MPH Acceleration</label>
+                            <input type="text" name="zero_to_sixty" class="form-control" placeholder="e.g. 3.0s" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-white small fw-bold">Top Speed</label>
+                            <input type="text" name="top_speed" class="form-control" placeholder="e.g. 197 mph" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-white small fw-bold">Seating Capacity</label>
+                            <input type="number" name="seats" class="form-control" value="2" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label text-white small fw-bold">Transmission</label>
+                            <select name="transmission" class="form-select">
+                                <option value="Automatic">Automatic</option>
+                                <option value="Manual">Manual</option>
+                                <option value="Direct-Drive">Direct-Drive Dual Motor</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-white small fw-bold">Powertrain / Fuel</label>
+                            <select name="fuel_type" class="form-select">
+                                <option value="Gasoline">Gasoline</option>
+                                <option value="Electric">Electric</option>
+                                <option value="Hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-white small fw-bold">Luggage Capacity</label>
+                            <input type="text" name="luggage_capacity" class="form-control" placeholder="e.g. 2 Bags">
+                        </div>
+
+                        <!-- Image File Upload Field -->
+                        <div class="col-md-12">
+                            <label class="form-label text-white small fw-bold"><i class="fa-solid fa-image text-info me-1"></i> Upload Vehicle Image *</label>
+                            <input type="file" name="image" class="form-control" accept="image/*" required>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label text-white small fw-bold">Tagline</label>
+                            <input type="text" name="tagline" class="form-control" placeholder="e.g. Supercharged Track Perfection">
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label text-white small fw-bold">Included Features (Comma Separated)</label>
+                            <input type="text" name="features" class="form-control" placeholder="e.g. Aerodynamic Rear Wing, Ceramic Brakes, Track Mode">
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_featured" id="chk_featured" checked>
+                                <label class="form-check-label text-white small" for="chk_featured">
+                                    Feature on Home Page Carousel
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary py-2 px-3 border-secondary text-white" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning py-2 px-4 fw-bold text-dark">
+                        <i class="fa-solid fa-plus me-1"></i> Add Vehicle to Fleet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% block extra_js %}
+{% endblock %}
+{% endblock %}
