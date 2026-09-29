@@ -13,6 +13,7 @@ urlpatterns = [
     path('my-bookings/', views.my_bookings_view, name='my_bookings'),
     path('booking/<int:booking_id>/cancel/', views.cancel_booking_view, name='cancel_booking'),
     path('dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
+    path('api/driver-availability/', views.driver_availability_api, name='driver_availability_api'),
     
     # Auth
     path('register/', views.register_view, name='register'),

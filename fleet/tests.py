@@ -190,5 +190,133 @@ class AutoDriveFleetTests(TestCase):
         self.assertContains(response, f"adminDeleteCarModal{self.car.id}")
         self.assertContains(response, "Delete Vehicle")
 
+    def test_driver_availability_schedule_overlap(self):
+        start = date(2026, 10, 10)
+        end = date(2026, 10, 15)
+
+        # Before booking, driver is free
+        self.assertTrue(self.driver.is_available_between(start, end))
+
+        # Customer 1 books the driver
+        Booking.objects.create(
+            user=self.user,
+            car=self.car,
+            start_date=start,
+            end_date=end,
+            pickup_location="Airport Hub",
+            return_location="Airport Hub",
+            drive_mode="chauffeur",
+            assigned_driver=self.driver,
+            driver_name="Customer 1",
+            driver_email="customer1@autodrive.io",
+            driver_phone="+91 98765 43210",
+            daily_rate_at_booking=self.car.daily_rate,
+            num_days=5,
+            subtotal=self.car.daily_rate * 5,
+            total_price=self.car.daily_rate * 5 + self.driver.daily_fee * 5,
+            status="CONFIRMED"
+        )
+
+        # Overlapping ranges must be unavailable
+        self.assertFalse(self.driver.is_available_between(date(2026, 10, 12), date(2026, 10, 14)))
+        self.assertFalse(self.driver.is_available_between(date(2026, 10, 8), date(2026, 10, 11)))
+        self.assertFalse(self.driver.is_available_between(date(2026, 10, 14), date(2026, 10, 18)))
+
+        # Non-overlapping ranges must remain available
+        self.assertTrue(self.driver.is_available_between(date(2026, 10, 1), date(2026, 10, 5)))
+        self.assertTrue(self.driver.is_available_between(date(2026, 10, 20), date(2026, 10, 25)))
+
+    def test_customer2_cannot_book_driver_already_booked_by_customer1(self):
+        customer1 = User.objects.create_user(username="customer1", password="password123")
+        customer2 = User.objects.create_user(username="customer2", password="password123")
+
+        start1 = date(2026, 11, 1)
+        end1 = date(2026, 11, 5)
+
+        # Customer 1 books Driver 1
+        Booking.objects.create(
+            user=customer1,
+            car=self.car,
+            start_date=start1,
+            end_date=end1,
+            drive_mode="chauffeur",
+            assigned_driver=self.driver,
+            driver_name="Customer 1",
+            driver_email="customer1@autodrive.io",
+            driver_phone="+91 98765 43210",
+            daily_rate_at_booking=self.car.daily_rate,
+            num_days=4,
+            subtotal=self.car.daily_rate * 4,
+            total_price=self.car.daily_rate * 4 + self.driver.daily_fee * 4,
+            status="CONFIRMED"
+        )
+
+        # Customer 2 creates a separate car to avoid car conflicts
+        car2 = Car.objects.create(
+            name="Ferrari 296 GTB",
+            make="Ferrari",
+            model="296 GTB",
+            year=2025,
+            category=self.category,
+            daily_rate=Decimal("12000.00"),
+            horsepower=819,
+            zero_to_sixty="2.9s",
+            top_speed="205 mph",
+            seats=2
+        )
+
+        # Customer 2 attempts to book Driver 1 for overlapping dates (Nov 3 to Nov 7)
+        self.client.login(username="customer2", password="password123")
+        response = self.client.post(f'/car/{car2.id}/book/', {
+            'start_date': '2026-11-03',
+            'end_date': '2026-11-07',
+            'drive_mode': 'chauffeur',
+            'driver_id': self.driver.id,
+            'pickup_location': 'Airport Terminal',
+            'return_location': 'Airport Terminal',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f"Chauffeur {self.driver.name} is already reserved")
+        # Ensure customer2 was NOT able to book the driver
+        self.assertEqual(Booking.objects.filter(user=customer2).count(), 0)
+
+    def test_driver_availability_api(self):
+        # Book driver for Dec 1 to Dec 5
+        Booking.objects.create(
+            user=self.user,
+            car=self.car,
+            start_date=date(2026, 12, 1),
+            end_date=date(2026, 12, 5),
+            drive_mode="chauffeur",
+            assigned_driver=self.driver,
+            driver_name="Test Driver",
+            driver_email="test@autodrive.io",
+            driver_phone="+91 98765 43210",
+            daily_rate_at_booking=self.car.daily_rate,
+            num_days=4,
+            subtotal=self.car.daily_rate * 4,
+            total_price=self.car.daily_rate * 4,
+            status="CONFIRMED"
+        )
+
+        # Query overlapping dates
+        response = self.client.get('/api/driver-availability/?start_date=2026-12-02&end_date=2026-12-04')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['status'], 'success')
+
+        driver_item = next(d for d in data['drivers'] if d['id'] == self.driver.id)
+        self.assertFalse(driver_item['is_available'])
+        self.assertIn("Booked", driver_item['conflict_info'])
+
+        # Query non-overlapping dates
+        response2 = self.client.get('/api/driver-availability/?start_date=2026-12-10&end_date=2026-12-15')
+        self.assertEqual(response2.status_code, 200)
+        data2 = response2.json()
+        driver_item2 = next(d for d in data2['drivers'] if d['id'] == self.driver.id)
+        self.assertTrue(driver_item2['is_available'])
+
+
 
 

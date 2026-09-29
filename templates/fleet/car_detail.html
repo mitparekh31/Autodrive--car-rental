@@ -308,20 +308,28 @@
 
                         <!-- Driver Selection Dropdown (No photo as requested) -->
                         <div id="driverSelectionBox" class="p-3 rounded-3 bg-dark border border-secondary mb-2 d-none">
-                            <label class="form-label text-white small fw-bold mb-2">
-                                <i class="fa-solid fa-user-shield text-warning me-1"></i> Select Available Certified Driver
-                            </label>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label text-white small fw-bold mb-0">
+                                    <i class="fa-solid fa-user-shield text-warning me-1"></i> Select Certified Chauffeur
+                                </label>
+                                <span id="driverAvailabilityBadge" class="badge {% if available_drivers_count > 0 %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %} px-2 py-1" style="font-size: 0.72rem;">
+                                    <i class="fa-solid fa-circle-check me-1"></i> <span id="availableDriverCountText">{{ available_drivers_count }} Available</span>
+                                </span>
+                            </div>
                             <select name="driver_id" id="driver_id_select" class="form-select bg-dark text-white border-secondary mb-2">
-                                {% for d in drivers %}
-                                <option value="{{ d.id }}" data-fee="{{ d.daily_fee }}" data-rating="{{ d.rating }}" data-exp="{{ d.experience_years }}" data-badge="{{ d.badge_type }}">
-                                    {{ d.name }} &bull; ★{{ d.rating }} ({{ d.badge_type }} - {{ d.experience_years }} yrs exp) &bull; +₹{{ d.daily_fee|floatformat:0 }}/day
+                                {% for item in drivers_with_status %}
+                                <option value="{{ item.driver.id }}" data-fee="{{ item.driver.daily_fee }}" data-rating="{{ item.driver.rating }}" data-exp="{{ item.driver.experience_years }}" data-badge="{{ item.driver.badge_type }}" {% if not item.is_available_for_dates %}disabled class="text-secondary"{% endif %}>
+                                    {{ item.driver.name }} &bull; ★{{ item.driver.rating }} ({{ item.driver.badge_type }} - {{ item.driver.experience_years }} yrs) &bull; +₹{{ item.driver.daily_fee|floatformat:0 }}/day{% if not item.is_available_for_dates %} &bull; [UNAVAILABLE: {{ item.conflict_info }}]{% endif %}
                                 </option>
                                 {% empty %}
-                                <option value="" disabled>No drivers available currently</option>
+                                <option value="" disabled>No drivers registered currently</option>
                                 {% endfor %}
                             </select>
+                            <div id="noDriversWarning" class="alert alert-warning py-2 px-3 small mt-2 mb-2 {% if available_drivers_count > 0 %}d-none{% endif %}">
+                                <i class="fa-solid fa-triangle-exclamation me-1"></i> All certified chauffeurs are reserved for these dates. Please switch to <strong>Self-Drive</strong> or select different rental dates.
+                            </div>
                             <div class="text-secondary small" style="font-size: 0.75rem;">
-                                <i class="fa-solid fa-shield-check text-success me-1"></i> Verified commercial license &amp; clean driving record.
+                                <i class="fa-solid fa-shield-check text-success me-1"></i> Dedicated chauffeur &bull; Guaranteed conflict-free scheduling &bull; Clean commercial license.
                             </div>
                         </div>
 
@@ -344,12 +352,13 @@
                                 <div class="mb-2">
                                     <label class="form-label text-white small mb-1">Contact Name</label>
                                     <input type="text" name="driver_name" class="form-control form-control-sm"
-                                        placeholder="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}John Driver{% endif %}">
+                                        placeholder="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}Customer 1{% endif %}">
                                 </div>
                                 <div class="mb-2">
                                     <label class="form-label text-white small mb-1">Contact Email</label>
                                     <input type="email" name="driver_email" class="form-control form-control-sm"
-                                        placeholder="{% if user.is_authenticated %}{{ user.email|default:'driver@autodrive.io' }}{% else %}driver@autodrive.io{% endif %}">
+                                        placeholder="{% if user.is_authenticated %}{{ user.email|default:'customer1@autodrive.io' }}{% else %}customer1@autodrive.io{% endif %}">
+
                                 </div>
                                 <div>
                                     <label class="form-label text-white small mb-1">Phone Number</label>

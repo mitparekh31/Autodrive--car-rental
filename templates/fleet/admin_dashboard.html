@@ -208,16 +208,29 @@
                             <div class="text-secondary" style="font-size: 0.72rem;">/ rental day</div>
                         </td>
                         <td>
-                            {% if d.is_available %}
-                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
-                                    <i class="fa-solid fa-circle-check me-1"></i> Available
-                                </span>
-                            {% else %}
-                                <span class="badge bg-secondary-subtle text-secondary border border-secondary px-2 py-1">
-                                    <i class="fa-solid fa-pause me-1"></i> Off-Duty
-                                </span>
-                            {% endif %}
+                            {% with active_trip=d.get_active_assignment_today next_trip=d.get_next_upcoming_booking %}
+                                {% if active_trip %}
+                                    <span class="badge bg-warning text-dark border border-warning px-2 py-1">
+                                        <i class="fa-solid fa-car-side me-1"></i> On Trip
+                                    </span>
+                                    <div class="text-warning" style="font-size: 0.72rem;">Until {{ active_trip.end_date|date:"M d" }} (#{{ active_trip.booking_ref }})</div>
+                                {% elif next_trip %}
+                                    <span class="badge bg-info-subtle text-info border border-info px-2 py-1">
+                                        <i class="fa-solid fa-calendar-check me-1"></i> Assigned
+                                    </span>
+                                    <div class="text-secondary" style="font-size: 0.72rem;">From {{ next_trip.start_date|date:"M d" }} (#{{ next_trip.booking_ref }})</div>
+                                {% elif d.is_available %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                        <i class="fa-solid fa-circle-check me-1"></i> Available
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary px-2 py-1">
+                                        <i class="fa-solid fa-pause me-1"></i> Off-Duty
+                                    </span>
+                                {% endif %}
+                            {% endwith %}
                         </td>
+
                         <td class="text-end">
                             <a href="/admin/fleet/driver/{{ d.id }}/change/" target="_blank" class="btn btn-sm btn-outline-secondary text-white rounded-pill px-2 py-1" title="Edit in Django Admin">
                                 <i class="fa-solid fa-pen-to-square"></i>

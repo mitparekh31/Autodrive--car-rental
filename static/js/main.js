@@ -18,6 +18,78 @@ document.addEventListener('DOMContentLoaded', () => {
     const driverSelect = document.getElementById('driver_id_select');
     const driverFeeElem = document.getElementById('est_driver_fee');
 
+    const driverCountText = document.getElementById('availableDriverCountText');
+    const driverCountBadge = document.getElementById('driverAvailabilityBadge');
+    const noDriversAlert = document.getElementById('noDriversWarning');
+
+    async function fetchDriverAvailability() {
+        if (!startDateInput || !endDateInput || !driverSelect) return;
+        const sVal = startDateInput.value;
+        const eVal = endDateInput.value;
+        if (!sVal || !eVal || new Date(eVal) <= new Date(sVal)) return;
+
+        try {
+            const resp = await fetch(`/api/driver-availability/?start_date=${encodeURIComponent(sVal)}&end_date=${encodeURIComponent(eVal)}`);
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (data.status === 'success' && Array.isArray(data.drivers)) {
+                const currentSelectedVal = driverSelect.value;
+                driverSelect.innerHTML = '';
+
+                let hasSelected = false;
+                data.drivers.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.id;
+                    opt.dataset.fee = d.daily_fee;
+                    opt.dataset.rating = d.rating;
+                    opt.dataset.exp = d.experience_years;
+                    opt.dataset.badge = d.badge_type;
+
+                    if (d.is_available) {
+                        opt.textContent = `${d.name} • ★${d.rating} (${d.badge_type} - ${d.experience_years} yrs) • +₹${Math.round(d.daily_fee)}/day`;
+                        if (!hasSelected && (currentSelectedVal == d.id || !currentSelectedVal)) {
+                            opt.selected = true;
+                            hasSelected = true;
+                        }
+                    } else {
+                        opt.disabled = true;
+                        opt.className = 'text-secondary';
+                        opt.textContent = `${d.name} • ★${d.rating} (${d.badge_type}) • +₹${Math.round(d.daily_fee)}/day • [UNAVAILABLE: ${d.conflict_info}]`;
+                    }
+                    driverSelect.appendChild(opt);
+                });
+
+                if (!hasSelected) {
+                    const firstAvail = driverSelect.querySelector('option:not([disabled])');
+                    if (firstAvail) {
+                        firstAvail.selected = true;
+                    }
+                }
+
+                if (driverCountText) driverCountText.textContent = `${data.available_count} Available`;
+                if (driverCountBadge) {
+                    if (data.available_count > 0) {
+                        driverCountBadge.className = 'badge bg-success-subtle text-success border border-success-subtle px-2 py-1';
+                    } else {
+                        driverCountBadge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1';
+                    }
+                }
+
+                if (noDriversAlert) {
+                    if (data.available_count === 0) {
+                        noDriversAlert.classList.remove('d-none');
+                    } else {
+                        noDriversAlert.classList.add('d-none');
+                    }
+                }
+
+                calculatePrice();
+            }
+        } catch (err) {
+            console.error('Failed to fetch driver availability:', err);
+        }
+    }
+
     // Auto-sync end_date min value when start_date changes
     if (startDateInput && endDateInput) {
         startDateInput.addEventListener('change', () => {
@@ -30,9 +102,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     endDateInput.value = minEnd;
                 }
             }
+            fetchDriverAvailability();
             calculatePrice();
         });
     }
+
 
     function calculatePrice() {
         if (!startDateInput || !endDateInput || !dailyRateElem) return;
@@ -100,9 +174,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (driverSelect) driverSelect.addEventListener('change', calculatePrice);
 
     if (startDateInput && endDateInput) {
-        endDateInput.addEventListener('change', calculatePrice);
+        endDateInput.addEventListener('change', () => {
+            fetchDriverAvailability();
+            calculatePrice();
+        });
         calculatePrice();
     }
+
 
 
     // --- 2. Star Rating Input Interaction ---

@@ -11,14 +11,15 @@ from datetime import date, timedelta
 def seed_database():
     print("[*] Seeding AutoDrive Fleet Data...")
 
-    # Create default demo user matching screenshot "john_driver"
-    user, created = User.objects.get_or_create(username="john_driver", email="john@autodrive.io")
+    # Create default demo user matching "customer1"
+    user, created = User.objects.get_or_create(username="customer1", email="customer1@autodrive.io")
     if created:
         user.set_password("password123")
-        user.first_name = "John"
-        user.last_name = "Driver"
+        user.first_name = "Customer"
+        user.last_name = "1"
         user.save()
-        print("  - Created user 'john_driver' (Password: password123)")
+        print("  - Created user 'customer1' (Password: password123)")
+
 
     # Create admin staff user
     admin, admin_created = User.objects.get_or_create(username="admin", email="admin@autodrive.io", is_staff=True, is_superuser=True)
@@ -240,8 +241,8 @@ def seed_database():
                 pickup_time="10:00 AM",
                 pickup_location="Downtown Airport Executive Hub",
                 return_location="Downtown Airport Executive Hub",
-                driver_name="John Driver",
-                driver_email="john@autodrive.io",
+                driver_name="Customer 1",
+                driver_email="customer1@autodrive.io",
                 driver_phone="+91 98765 43210",
                 daily_rate_at_booking=taycan.daily_rate,
                 num_days=5,

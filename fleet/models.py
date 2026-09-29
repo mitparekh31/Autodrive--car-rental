@@ -98,6 +98,55 @@ class Driver(models.Model):
     def __str__(self):
         return f"{self.name} (★{self.rating} - {self.badge_type})"
 
+    def is_available_between(self, start_date, end_date, exclude_booking_id=None):
+        """
+        Check if driver is free of any active bookings during the given date range.
+        An overlap exists if: start_date <= existing.end_date and end_date >= existing.start_date.
+        """
+        if not self.is_available:
+            return False
+        qs = self.bookings.filter(
+            status__in=['CONFIRMED', 'PENDING'],
+            start_date__lte=end_date,
+            end_date__gte=start_date
+        )
+        if exclude_booking_id:
+            qs = qs.exclude(id=exclude_booking_id)
+        return not qs.exists()
+
+    def get_overlapping_booking(self, start_date, end_date, exclude_booking_id=None):
+        """Return the first active booking overlapping with the given date range, or None."""
+        if not self.is_available:
+            return None
+        qs = self.bookings.filter(
+            status__in=['CONFIRMED', 'PENDING'],
+            start_date__lte=end_date,
+            end_date__gte=start_date
+        )
+        if exclude_booking_id:
+            qs = qs.exclude(id=exclude_booking_id)
+        return qs.first()
+
+    def get_active_assignment_today(self):
+        """Check if the driver is currently assigned on an active trip today."""
+        from datetime import date
+        today = date.today()
+        return self.bookings.filter(
+            status__in=['CONFIRMED', 'PENDING'],
+            start_date__lte=today,
+            end_date__gte=today
+        ).first()
+
+    def get_next_upcoming_booking(self):
+        """Return the next upcoming booking scheduled for this driver."""
+        from datetime import date
+        today = date.today()
+        return self.bookings.filter(
+            status__in=['CONFIRMED', 'PENDING'],
+            start_date__gt=today
+        ).order_by('start_date').first()
+
+
 
 class Booking(models.Model):
     STATUS_CHOICES = [

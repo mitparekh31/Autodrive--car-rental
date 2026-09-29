@@ -31,9 +31,10 @@ Open your browser and navigate to:
 👉 **[http://127.0.0.1:8000/](http://127.0.0.1:8000/)**
 
 ### 🔑 Demo Accounts Available:
-- **Driver User Account**:
-  - Username: `john_driver`
+- **Customer Account**:
+  - Username: `customer1`
   - Password: `password123`
+
 - **Fleet Admin Manager Account**:
   - Username: `admin`
   - Password: `admin123`

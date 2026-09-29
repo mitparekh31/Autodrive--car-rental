@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
@@ -78,14 +80,34 @@ def car_detail_view(request, car_id):
     reviews = car.reviews.all().order_by('-created_at')
     certified_drivers = Driver.objects.filter(is_available=True).order_by('-rating')
 
-    today = date.today().strftime('%Y-%m-%d')
-    tomorrow = (date.today() + timedelta(days=1)).strftime('%Y-%m-%d')
+    today_date = date.today()
+    tomorrow_date = today_date + timedelta(days=1)
+
+    # Pre-calculate availability for default dates (today to tomorrow)
+    drivers_with_status = []
+    available_drivers_count = 0
+    for d in certified_drivers:
+        conflict = d.get_overlapping_booking(today_date, tomorrow_date)
+        is_free = (conflict is None)
+        if is_free:
+            available_drivers_count += 1
+        conflict_msg = f"Booked ({conflict.start_date.strftime('%b %d')} - {conflict.end_date.strftime('%b %d')})" if conflict else None
+        drivers_with_status.append({
+            'driver': d,
+            'is_available_for_dates': is_free,
+            'conflict_info': conflict_msg,
+        })
+
+    today = today_date.strftime('%Y-%m-%d')
+    tomorrow = tomorrow_date.strftime('%Y-%m-%d')
     
     context = {
         'car': car,
         'similar_cars': similar_cars,
         'reviews': reviews,
         'drivers': certified_drivers,
+        'drivers_with_status': drivers_with_status,
+        'available_drivers_count': available_drivers_count,
         'today': today,
         'tomorrow': tomorrow,
     }
@@ -155,12 +177,28 @@ def book_car_view(request, car_id):
         num_days = (end_date - start_date).days
         subtotal = car.daily_rate * num_days
 
-        if drive_mode == 'chauffeur' and driver_id:
+        if drive_mode == 'chauffeur':
+            if not driver_id:
+                messages.error(request, "Please select a certified chauffeur to proceed with driver service.")
+                return redirect('car_detail', car_id=car.id)
             try:
                 assigned_driver = Driver.objects.get(id=driver_id, is_available=True)
-                chauffeur_fee = assigned_driver.daily_fee * num_days
             except (Driver.DoesNotExist, ValueError):
-                assigned_driver = None
+                messages.error(request, "Selected certified driver is invalid or currently inactive.")
+                return redirect('car_detail', car_id=car.id)
+
+            # Strict overlap check: Ensure driver is not already booked during this time window
+            conflicting = assigned_driver.get_overlapping_booking(start_date, end_date)
+            if conflicting:
+                messages.error(
+                    request,
+                    f"Chauffeur {assigned_driver.name} is already reserved from {conflicting.start_date.strftime('%b %d, %Y')} "
+                    f"to {conflicting.end_date.strftime('%b %d, %Y')}. Please choose another certified driver or select different dates."
+                )
+                return redirect('car_detail', car_id=car.id)
+
+            chauffeur_fee = assigned_driver.daily_fee * num_days
+
 
         grand_total = subtotal + chauffeur_fee
 
@@ -383,5 +421,58 @@ def logout_view(request):
     logout(request)
     messages.info(request, "You have been logged out.")
     return redirect('home')
+
+
+def driver_availability_api(request):
+    """
+    API endpoint returning all certified drivers with availability status
+    for the requested start_date and end_date.
+    """
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if not start_date_str or not end_date_str:
+        return JsonResponse({'error': 'start_date and end_date are required'}, status=400)
+
+    try:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'Invalid date format (must be YYYY-MM-DD)'}, status=400)
+
+    if end_date <= start_date:
+        return JsonResponse({'error': 'end_date must be after start_date'}, status=400)
+
+    drivers = Driver.objects.filter(is_available=True).order_by('-rating')
+    drivers_data = []
+    available_count = 0
+
+    for d in drivers:
+        conflict = d.get_overlapping_booking(start_date, end_date)
+        is_free = (conflict is None)
+        if is_free:
+            available_count += 1
+        conflict_msg = f"Booked ({conflict.start_date.strftime('%b %d')} - {conflict.end_date.strftime('%b %d')})" if conflict else None
+
+        drivers_data.append({
+            'id': d.id,
+            'name': d.name,
+            'rating': str(d.rating),
+            'badge_type': d.badge_type,
+            'experience_years': d.experience_years,
+            'daily_fee': float(d.daily_fee),
+            'is_available': is_free,
+            'conflict_info': conflict_msg,
+        })
+
+    return JsonResponse({
+        'status': 'success',
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        'available_count': available_count,
+        'total_count': len(drivers_data),
+        'drivers': drivers_data,
+    })
+
 
 
