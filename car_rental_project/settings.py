@@ -92,12 +92,15 @@ if POSTGRES_DB and POSTGRES_USER and POSTGRES_PASSWORD:
         }
     }
 else:
+    db_path = (BASE_DIR / 'data' / 'db.sqlite3') if (BASE_DIR / 'data').exists() else (BASE_DIR / 'db.sqlite3')
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'data' / 'db.sqlite3',
+            'NAME': db_path,
         }
     }
+
+
 
 
 # Password validation

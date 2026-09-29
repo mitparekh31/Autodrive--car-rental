@@ -7,7 +7,8 @@
 <div class="container py-4">
 
     <!-- Back button -->
-    <a href="{% url 'fleet_list' %}" class="btn-outline-autodrive py-2 px-3 fs-6 mb-4 d-inline-flex align-items-center gap-2">
+    <a href="{% url 'fleet_list' %}"
+        class="btn-outline-autodrive py-2 px-3 fs-6 mb-4 d-inline-flex align-items-center gap-2">
         <i class="fa-solid fa-arrow-left"></i> Back to Fleet Catalog
     </a>
 
@@ -17,9 +18,11 @@
             <div class="p-4 rounded-4 glass-panel mb-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <span class="badge bg-primary mb-2 px-3 py-2 fs-6 fw-bold text-white">{{ car.category.name }}</span>
+                        <span class="badge bg-primary mb-2 px-3 py-2 fs-6 fw-bold text-white">{{ car.category.name
+                            }}</span>
                         <h1 class="h2 text-white fw-bold mb-1">{{ car.name }}</h1>
-                        <div class="text-secondary small"><i class="fa-solid fa-calendar me-1 text-primary"></i> Model Year {{ car.year }} &bull; {{ car.make }}</div>
+                        <div class="text-secondary small"><i class="fa-solid fa-calendar me-1 text-primary"></i> Model
+                            Year {{ car.year }} &bull; {{ car.make }}</div>
                     </div>
                     <div class="text-end">
                         <div class="h3 text-info fw-bold mb-0">₹{{ car.daily_rate|floatformat:0 }}</div>
@@ -29,15 +32,18 @@
 
                 <div class="car-img-wrapper rounded-4 mb-4" style="height: 380px;">
                     <img src="{{ car.primary_image }}" alt="{{ car.name }}" class="w-100 h-100 object-fit-cover">
-                    <span class="badge-availability"><i class="fa-solid fa-circle text-success me-1"></i> 100% Guaranteed Availability</span>
+                    <span class="badge-availability"><i class="fa-solid fa-circle text-success me-1"></i> 100%
+                        Guaranteed Availability</span>
                 </div>
 
                 <!-- Vehicle Specifications Grid -->
-                <h3 class="h5 text-white fw-bold mb-3"><i class="fa-solid fa-sliders text-info me-2"></i> Vehicle Performance Specs</h3>
+                <h3 class="h5 text-white fw-bold mb-3"><i class="fa-solid fa-sliders text-info me-2"></i> Vehicle
+                    Performance Specs</h3>
                 <div class="row g-3 mb-4">
                     <div class="col-6 col-md-4">
                         <div class="p-3 rounded-3 bg-dark border border-secondary">
-                            <div class="text-info small mb-1"><i class="fa-solid fa-gauge-high me-1"></i> Horsepower</div>
+                            <div class="text-info small mb-1"><i class="fa-solid fa-gauge-high me-1"></i> Horsepower
+                            </div>
                             <div class="fw-bold text-white fs-5">{{ car.horsepower }} HP</div>
                         </div>
                     </div>
@@ -49,7 +55,8 @@
                     </div>
                     <div class="col-6 col-md-4">
                         <div class="p-3 rounded-3 bg-dark border border-secondary">
-                            <div class="text-info small mb-1"><i class="fa-solid fa-tachometer me-1"></i> Top Speed</div>
+                            <div class="text-info small mb-1"><i class="fa-solid fa-tachometer me-1"></i> Top Speed
+                            </div>
                             <div class="fw-bold text-white fs-5">{{ car.top_speed }}</div>
                         </div>
                     </div>
@@ -61,7 +68,8 @@
                     </div>
                     <div class="col-6 col-md-4">
                         <div class="p-3 rounded-3 bg-dark border border-secondary">
-                            <div class="text-info small mb-1"><i class="fa-solid fa-charging-station me-1"></i> Powertrain</div>
+                            <div class="text-info small mb-1"><i class="fa-solid fa-charging-station me-1"></i>
+                                Powertrain</div>
                             <div class="fw-bold text-white fs-5">{{ car.fuel_type }}</div>
                         </div>
                     </div>
@@ -74,14 +82,16 @@
                 </div>
 
                 <!-- Premium Included Features -->
-                <h3 class="h5 text-white fw-bold mb-3"><i class="fa-solid fa-star text-warning me-2"></i> Premium Included Features</h3>
+                <h3 class="h5 text-white fw-bold mb-3"><i class="fa-solid fa-star text-warning me-2"></i> Premium
+                    Included Features</h3>
                 <div class="d-flex flex-wrap gap-2 mb-4">
                     {% for feat in car.get_features_list %}
-                        <span class="badge bg-secondary p-2 px-3 fw-semibold text-white"><i class="fa-solid fa-circle-check text-success me-1"></i> {{ feat }}</span>
+                    <span class="badge bg-secondary p-2 px-3 fw-semibold text-white"><i
+                            class="fa-solid fa-circle-check text-success me-1"></i> {{ feat }}</span>
                     {% empty %}
-                        <span class="badge bg-secondary p-2 px-3 text-white">Full Self-Driving Autopilot</span>
-                        <span class="badge bg-secondary p-2 px-3 text-white">Panoramic Glass Canopy</span>
-                        <span class="badge bg-secondary p-2 px-3 text-white">Premium Surround Sound</span>
+                    <span class="badge bg-secondary p-2 px-3 text-white">Full Self-Driving Autopilot</span>
+                    <span class="badge bg-secondary p-2 px-3 text-white">Panoramic Glass Canopy</span>
+                    <span class="badge bg-secondary p-2 px-3 text-white">Premium Surround Sound</span>
                     {% endfor %}
                 </div>
             </div>
@@ -101,7 +111,7 @@
                     <form method="POST" action="{% url 'add_review' car.id %}">
                         {% csrf_token %}
                         <input type="hidden" name="rating" id="ratingValueInput" value="5">
-                        
+
                         <div class="mb-3">
                             <label class="form-label text-white small me-2">Your Rating:</label>
                             <div class="star-rating-select d-inline-flex" id="starRatingSelector">
@@ -114,7 +124,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <textarea name="comment" class="form-control" rows="2" placeholder="Write your driving experience review..." required></textarea>
+                            <textarea name="comment" class="form-control" rows="2"
+                                placeholder="Write your driving experience review..." required></textarea>
                         </div>
 
                         <button type="submit" class="btn-primary-autodrive py-2 px-4 fs-6">
@@ -124,7 +135,8 @@
                 </div>
                 {% else %}
                 <div class="p-3 rounded-3 bg-dark text-white small mb-4">
-                    <i class="fa-solid fa-lock me-1"></i> <a href="{% url 'login' %}?next={{ request.path }}" class="text-info text-decoration-none fw-bold">Log in</a> to post a review for this vehicle.
+                    <i class="fa-solid fa-lock me-1"></i> <a href="{% url 'login' %}?next={{ request.path }}"
+                        class="text-info text-decoration-none fw-bold">Log in</a> to post a review for this vehicle.
                 </div>
                 {% endif %}
 
@@ -138,72 +150,211 @@
                             </div>
                             <div class="text-warning small">
                                 {% for i in "12345" %}
-                                    {% if forloop.counter <= rev.rating %}
-                                        <i class="fa-solid fa-star"></i>
+                                {% if forloop.counter <= rev.rating %} <i class="fa-solid fa-star"></i>
                                     {% else %}
-                                        <i class="fa-regular fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
                                     {% endif %}
-                                {% endfor %}
+                                    {% endfor %}
                             </div>
                         </div>
                         <p class="text-secondary small mb-1">{{ rev.comment }}</p>
-                        <div class="text-end text-secondary" style="font-size: 0.72rem;">{{ rev.created_at|date:"M d, Y" }}</div>
+                        <div class="text-end text-secondary" style="font-size: 0.72rem;">{{ rev.created_at|date:"M d, Y"
+                            }}</div>
                     </div>
                     {% empty %}
-                    <div class="text-secondary small text-center py-3">No reviews yet. Be the first driver to review this vehicle!</div>
+                    <div class="text-secondary small text-center py-3">No reviews yet. Be the first driver to review
+                        this vehicle!</div>
                     {% endfor %}
                 </div>
             </div>
         </div>
 
-        <!-- Right Instant Reservation Form Column -->
+        {# Right Column: Admin Console OR Customer Booking Form #}
         <div class="col-lg-5">
+            {% if user.is_staff or user.is_superuser %}
+            <!-- Admin Management Console (Admins cannot book cars) -->
+            <div class="p-4 rounded-4 glass-panel position-sticky" style="top: 100px;">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="badge bg-warning text-dark px-3 py-2 fw-bold">
+                        <i class="fa-solid fa-shield-halved me-1"></i> Fleet Manager
+                    </span>
+                    <span class="badge bg-dark border border-secondary text-info">Admin Console</span>
+                </div>
+                <h2 class="h4 text-white fw-bold mb-2">{{ car.name }}</h2>
+                <div class="text-secondary small mb-4">{{ car.category.name }} &bull; {{ car.year }} &bull; {{ car.fuel_type }}</div>
+
+                <div class="p-3 rounded-3 bg-dark border border-secondary mb-4">
+                    <div class="d-flex justify-content-between small text-secondary mb-2">
+                        <span>Daily Rate:</span>
+                        <span class="text-white fw-bold">₹{{ car.daily_rate|floatformat:0 }}/day</span>
+                    </div>
+                    <div class="d-flex justify-content-between small text-secondary mb-2">
+                        <span>Fleet Status:</span>
+                        <span class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Active Inventory</span>
+                    </div>
+                    <div class="d-flex justify-content-between small text-secondary mb-0">
+                        <span>Horsepower:</span>
+                        <span class="text-white fw-bold">{{ car.horsepower }} HP</span>
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary bg-dark border-secondary text-secondary small mb-4">
+                    <i class="fa-solid fa-circle-info text-info me-1"></i>
+                    Reservation features are reserved for customers. Fleet managers manage vehicles directly from the Admin Panel.
+                </div>
+
+                <div class="d-flex flex-column gap-2">
+                    <a href="{% url 'admin_dashboard' %}" class="btn-primary-autodrive py-2 justify-content-center">
+                        <i class="fa-solid fa-gauge-high me-1"></i> Admin Dashboard
+                    </a>
+                    <a href="{% url 'fleet_list' %}" class="btn btn-outline-light py-2">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Fleet Inventory
+                    </a>
+                    <button type="button" class="btn btn-outline-danger py-2" data-bs-toggle="modal" data-bs-target="#adminDeleteModalDetail">
+                        <i class="fa-solid fa-trash me-1"></i> Delete Vehicle
+                    </button>
+                </div>
+            </div>
+
+            <!-- Delete Confirmation Modal for Admin in Car Detail -->
+            <div class="modal fade modal-autodrive" id="adminDeleteModalDetail" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content text-white" style="background-color: #0B1120 !important; border: 1px solid rgba(239, 68, 68, 0.4) !important;">
+                        <div class="modal-header border-bottom border-secondary">
+                            <h5 class="modal-title fw-bold text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i> Confirm Vehicle Deletion</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body py-4">
+                            <p class="mb-2">Are you sure you want to permanently delete <strong>{{ car.name }}</strong> from the fleet inventory?</p>
+                            <p class="text-secondary small mb-0">This action cannot be undone and will remove all vehicle data from listings.</p>
+                        </div>
+                        <div class="modal-footer border-top border-secondary">
+                            <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">Cancel</button>
+                            <form method="POST" action="{% url 'delete_car' car.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="fleet">
+                                <button type="submit" class="btn btn-danger px-4 fw-bold">
+                                    <i class="fa-solid fa-trash me-1"></i> Permanently Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Instant Reservation Form for Customers -->
             <div class="p-4 rounded-4 glass-panel position-sticky" style="top: 100px;">
                 <h2 class="h4 text-white fw-bold mb-3"><i class="fa-solid fa-bolt text-warning me-2"></i> Instant Reservation</h2>
-                
+
                 <form method="POST" action="{% url 'book_car' car.id %}">
                     {% csrf_token %}
-                    
+
                     <div class="row g-3 mb-3">
                         <div class="col-6">
                             <label class="form-label text-white small fw-bold">Pick-Up Date</label>
-                            <input type="date" id="start_date" name="start_date" class="form-control" required min="{{ today }}" value="{{ today }}">
+                            <input type="date" id="start_date" name="start_date" class="form-control" required
+                                min="{{ today }}" value="{{ today }}">
                         </div>
                         <div class="col-6">
                             <label class="form-label text-white small fw-bold">Return Date</label>
-                            <input type="date" id="end_date" name="end_date" class="form-control" required min="{{ tomorrow }}" value="{{ tomorrow }}">
+                            <input type="date" id="end_date" name="end_date" class="form-control" required
+                                min="{{ tomorrow }}" value="{{ tomorrow }}">
                         </div>
                     </div>
 
                     <!-- Text box inputs for Pick-Up & Return Location -->
                     <div class="mb-3">
-                        <label class="form-label text-white small fw-bold"><i class="fa-solid fa-location-dot text-danger me-1"></i> Pick-Up Location</label>
-                        <input type="text" name="pickup_location" class="form-control" placeholder="e.g. Mumbai Airport Terminal 2" value="Downtown Central Hub" required>
+                        <label class="form-label text-white small fw-bold"><i
+                                class="fa-solid fa-location-dot text-danger me-1"></i> Pick-Up Location</label>
+                        <input type="text" name="pickup_location" class="form-control"
+                            placeholder="e.g. Mumbai Airport Terminal 2" value="Downtown Central Hub" required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label text-white small fw-bold"><i class="fa-solid fa-location-crosshairs text-info me-1"></i> Drop-Off / Return Location</label>
-                        <input type="text" name="return_location" class="form-control" placeholder="e.g. Bandra Kurla Complex Depot" value="Downtown Central Hub" required>
+                        <label class="form-label text-white small fw-bold"><i
+                                class="fa-solid fa-location-crosshairs text-info me-1"></i> Drop-Off / Return Location</label>
+                        <input type="text" name="return_location" class="form-control"
+                            placeholder="e.g. Bandra Kurla Complex Depot" value="Downtown Central Hub" required>
+                    </div>
+
+                    <!-- Drive Mode Selection: Self-Drive vs Certified Chauffeur -->
+                    <div class="mb-3">
+                        <label class="form-label text-white small fw-bold d-flex justify-content-between align-items-center mb-1">
+                            <span><i class="fa-solid fa-steering-wheel text-warning me-1"></i> Driving Preference</span>
+                            <span class="text-secondary" style="font-size: 0.75rem;">Self-Drive or Chauffeur</span>
+                        </label>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="drive_mode" id="mode_self" value="self" checked autocomplete="off">
+                                <label class="btn btn-outline-info w-100 py-2 text-start d-flex align-items-center gap-2 rounded-3" for="mode_self" style="font-size: 0.85rem;">
+                                    <i class="fa-solid fa-id-card fs-5"></i>
+                                    <div>
+                                        <div class="fw-bold">Self-Drive</div>
+                                        <div class="text-secondary" style="font-size: 0.7rem;">Drive yourself</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="drive_mode" id="mode_chauffeur" value="chauffeur" autocomplete="off">
+                                <label class="btn btn-outline-warning w-100 py-2 text-start d-flex align-items-center gap-2 rounded-3" for="mode_chauffeur" style="font-size: 0.85rem;">
+                                    <i class="fa-solid fa-user-tie fs-5"></i>
+                                    <div>
+                                        <div class="fw-bold">With Driver</div>
+                                        <div class="text-secondary" style="font-size: 0.7rem;">Certified Chauffeur</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Driver Selection Dropdown (No photo as requested) -->
+                        <div id="driverSelectionBox" class="p-3 rounded-3 bg-dark border border-secondary mb-2 d-none">
+                            <label class="form-label text-white small fw-bold mb-2">
+                                <i class="fa-solid fa-user-shield text-warning me-1"></i> Select Available Certified Driver
+                            </label>
+                            <select name="driver_id" id="driver_id_select" class="form-select bg-dark text-white border-secondary mb-2">
+                                {% for d in drivers %}
+                                <option value="{{ d.id }}" data-fee="{{ d.daily_fee }}" data-rating="{{ d.rating }}" data-exp="{{ d.experience_years }}" data-badge="{{ d.badge_type }}">
+                                    {{ d.name }} &bull; ★{{ d.rating }} ({{ d.badge_type }} - {{ d.experience_years }} yrs exp) &bull; +₹{{ d.daily_fee|floatformat:0 }}/day
+                                </option>
+                                {% empty %}
+                                <option value="" disabled>No drivers available currently</option>
+                                {% endfor %}
+                            </select>
+                            <div class="text-secondary small" style="font-size: 0.75rem;">
+                                <i class="fa-solid fa-shield-check text-success me-1"></i> Verified commercial license &amp; clean driving record.
+                            </div>
+                        </div>
+
+                        <!-- Customer License Input (for Self-Drive) -->
+                        <div id="customerLicenseBox" class="mb-2">
+                            <label class="form-label text-white small fw-bold">Customer Driving License Number</label>
+                            <input type="text" name="customer_license" class="form-control form-control-sm" placeholder="e.g. DL-0420110012345" value="DL-1420110098765">
+                        </div>
                     </div>
 
                     <!-- Driver Contact Details Accordion -->
                     <div class="mb-4">
-                        <a class="text-info small text-decoration-none fw-bold d-inline-flex align-items-center gap-1 mb-2" data-bs-toggle="collapse" href="#driverDetailsCollapse" role="button" aria-expanded="false">
-                            <i class="fa-solid fa-user-gear"></i> Driver Contact Details (Optional) <i class="fa-solid fa-chevron-down fs-6"></i>
+                        <a class="text-info small text-decoration-none fw-bold d-inline-flex align-items-center gap-1 mb-2"
+                            data-bs-toggle="collapse" href="#driverDetailsCollapse" role="button" aria-expanded="false">
+                            <i class="fa-solid fa-user-gear"></i> Contact Details (Optional) <i
+                                class="fa-solid fa-chevron-down fs-6"></i>
                         </a>
                         <div class="collapse" id="driverDetailsCollapse">
                             <div class="p-3 rounded-3 bg-dark border border-secondary">
                                 <div class="mb-2">
-                                    <label class="form-label text-white small mb-1">Driver Full Name</label>
-                                    <input type="text" name="driver_name" class="form-control form-control-sm" placeholder="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}John Driver{% endif %}">
+                                    <label class="form-label text-white small mb-1">Contact Name</label>
+                                    <input type="text" name="driver_name" class="form-control form-control-sm"
+                                        placeholder="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}John Driver{% endif %}">
                                 </div>
                                 <div class="mb-2">
-                                    <label class="form-label text-white small mb-1">Driver Email</label>
-                                    <input type="email" name="driver_email" class="form-control form-control-sm" placeholder="{% if user.is_authenticated %}{{ user.email|default:'driver@autodrive.io' }}{% else %}driver@autodrive.io{% endif %}">
+                                    <label class="form-label text-white small mb-1">Contact Email</label>
+                                    <input type="email" name="driver_email" class="form-control form-control-sm"
+                                        placeholder="{% if user.is_authenticated %}{{ user.email|default:'driver@autodrive.io' }}{% else %}driver@autodrive.io{% endif %}">
                                 </div>
                                 <div>
-                                    <label class="form-label text-white small mb-1">Driver Phone Number</label>
-                                    <input type="text" name="driver_phone" class="form-control form-control-sm" placeholder="+91 98765 43210">
+                                    <label class="form-label text-white small mb-1">Phone Number</label>
+                                    <input type="text" name="driver_phone" class="form-control form-control-sm"
+                                        placeholder="+91 98765 43210">
                                 </div>
                             </div>
                         </div>
@@ -212,14 +363,18 @@
                     <!-- Live Calculation Breakdown -->
                     <div class="p-3 rounded-3 bg-dark border border-secondary mb-4">
                         <span id="daily_rate_val" data-rate="{{ car.daily_rate }}" class="d-none"></span>
-                        
+
                         <div class="d-flex justify-content-between small text-secondary mb-2">
                             <span>Duration:</span>
                             <span id="est_num_days" class="text-white fw-bold">1 day</span>
                         </div>
                         <div class="d-flex justify-content-between small text-secondary mb-2">
-                            <span>Base Rate Subtotal:</span>
+                            <span>Vehicle Base Rate:</span>
                             <span id="est_subtotal" class="text-white fw-bold">₹{{ car.daily_rate|floatformat:0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between small text-secondary mb-2" id="driver_fee_row">
+                            <span id="driver_fee_label">Driver Service:</span>
+                            <span id="est_driver_fee" class="text-success fw-bold">₹0 (Self-Drive)</span>
                         </div>
 
                         <hr class="border-secondary my-2">
@@ -231,18 +386,20 @@
                     </div>
 
                     {% if user.is_authenticated %}
-                        <button type="submit" class="btn-primary-autodrive w-100 py-3 justify-content-center fs-5">
-                            Confirm Instant Booking <i class="fa-solid fa-bolt ms-1"></i>
-                        </button>
+                    <button type="submit" class="btn-primary-autodrive w-100 py-3 justify-content-center fs-5">
+                        Confirm Instant Booking <i class="fa-solid fa-bolt ms-1"></i>
+                    </button>
                     {% else %}
-                        <a href="{% url 'login' %}?next={{ request.path }}" class="btn-primary-autodrive w-100 py-3 justify-content-center fs-5">
-                            Log In to Reserve <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
-                        </a>
-                        <p class="small text-secondary text-center mt-2 mb-0">No account? Register in 10 seconds.</p>
+                    <a href="{% url 'login' %}?next={{ request.path }}"
+                        class="btn-primary-autodrive w-100 py-3 justify-content-center fs-5">
+                        Log In to Reserve <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
+                    </a>
+                    <p class="small text-secondary text-center mt-2 mb-0">No account? Register in 10 seconds.</p>
                     {% endif %}
 
                 </form>
             </div>
+            {% endif %}
         </div>
     </div>
 

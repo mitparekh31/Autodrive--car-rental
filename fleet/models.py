@@ -77,12 +77,39 @@ class Car(models.Model):
         return "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1200&q=80"
 
 
+class Driver(models.Model):
+    name = models.CharField(max_length=150)
+    phone = models.CharField(max_length=30)
+    email = models.EmailField(blank=True)
+    license_number = models.CharField(max_length=50, unique=True, help_text="Commercial Driving License #")
+    experience_years = models.IntegerField(default=5, help_text="Years of driving experience")
+    rating = models.DecimalField(max_digits=3, decimal_places=1, default=4.9)
+    trips_completed = models.IntegerField(default=150)
+    languages = models.CharField(max_length=150, default="English, Hindi", help_text="Languages spoken")
+    daily_fee = models.DecimalField(max_digits=10, decimal_places=2, default=800.00, help_text="Daily Chauffeur Fee in INR")
+    is_available = models.BooleanField(default=True)
+    bio = models.CharField(max_length=255, default="Certified luxury executive chauffeur with clean driving record.")
+    badge_type = models.CharField(max_length=50, default="VIP Chauffeur", help_text="e.g. Master Chauffeur, VIP Escort, Track Certified")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-rating', 'name']
+
+    def __str__(self):
+        return f"{self.name} (★{self.rating} - {self.badge_type})"
+
+
 class Booking(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'Pending Confirmation'),
         ('CONFIRMED', 'Confirmed'),
         ('COMPLETED', 'Completed'),
         ('CANCELLED', 'Cancelled'),
+    ]
+
+    DRIVE_MODE_CHOICES = [
+        ('self', 'Self Drive'),
+        ('chauffeur', 'With Professional Chauffeur'),
     ]
 
     booking_ref = models.CharField(max_length=20, unique=True, editable=False)
@@ -94,6 +121,11 @@ class Booking(models.Model):
     pickup_time = models.CharField(max_length=20, default="10:00 AM")
     pickup_location = models.CharField(max_length=200, default="Downtown Central Hub")
     return_location = models.CharField(max_length=200, default="Downtown Central Hub")
+    
+    # Drive Mode & Assigned Driver
+    drive_mode = models.CharField(max_length=20, choices=DRIVE_MODE_CHOICES, default='self')
+    assigned_driver = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True, blank=True, related_name="bookings")
+    customer_license = models.CharField(max_length=50, blank=True, help_text="Customer Driving License # (For self drive)")
     
     driver_name = models.CharField(max_length=150)
     driver_email = models.EmailField()
@@ -107,7 +139,8 @@ class Booking(models.Model):
     
     # Optional Add-ons
     insurance_opt = models.BooleanField(default=False) # +$25/day
-    chauffeur_opt = models.BooleanField(default=False) # +$80/day
+    chauffeur_opt = models.BooleanField(default=False) # True if drive_mode == 'chauffeur'
+    chauffeur_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     gps_opt = models.BooleanField(default=False)       # +$10/day
     
     total_price = models.DecimalField(max_digits=10, decimal_places=2)

@@ -24,7 +24,8 @@
 
                 <!-- Description -->
                 <p class="hero-description">
-                    Browse luxury sedans, electric supercars, solo track bikes, and VIP 8-seater vans. Enjoy guaranteed real-time availability and instant online reservations.
+                    Browse luxury sedans, electric supercars, solo track bikes, and VIP 8-seater vans. Enjoy guaranteed
+                    real-time availability and instant online reservations.
                 </p>
 
                 <!-- Feature Pills -->
@@ -60,7 +61,8 @@
                 <span class="text-info fw-bold text-uppercase small tracking-wide">Explore Categories</span>
                 <h2 class="h3 text-white fw-bold mb-0">Curated Fleet Categories</h2>
             </div>
-            <a href="{% url 'fleet_list' %}" class="btn-outline-autodrive py-2 px-3 fs-6">View All <i class="fa-solid fa-arrow-right ms-1"></i></a>
+            <a href="{% url 'fleet_list' %}" class="btn-outline-autodrive py-2 px-3 fs-6">View All <i
+                    class="fa-solid fa-arrow-right ms-1"></i></a>
         </div>
 
         <div class="row g-3">
@@ -88,15 +90,16 @@
                 <span class="text-primary fw-bold text-uppercase small tracking-wide">Handpicked Selection</span>
                 <h2 class="h3 text-white fw-bold mb-0">Featured Dream Cars</h2>
             </div>
-            <a href="{% url 'fleet_list' %}" class="btn-outline-autodrive py-2 px-3 fs-6">Browse Entire Fleet <i class="fa-solid fa-chevron-right ms-1"></i></a>
+            <a href="{% url 'fleet_list' %}" class="btn-outline-autodrive py-2 px-3 fs-6">Browse Entire Fleet <i
+                    class="fa-solid fa-chevron-right ms-1"></i></a>
         </div>
 
         <div class="row g-4">
             {% for car in featured_cars %}
             <div class="col-lg-4 col-md-6">
                 <div class="car-card">
-                    <div class="car-img-wrapper">
-                        <img src="{{ car.primary_image }}" alt="{{ car.name }}">
+                    <div class="car-img-wrapper car-img-box" style="height: 230px; aspect-ratio: 16 / 10; overflow: hidden; position: relative;">
+                        <img src="{{ car.primary_image }}" alt="{{ car.name }}" class="car-img w-100 h-100 object-fit-cover" loading="lazy">
                         <span class="badge-availability">
                             <i class="fa-solid fa-circle text-success me-1"></i> Available Now
                         </span>
@@ -108,9 +111,11 @@
 
                         <div class="specs-grid">
                             <div class="spec-item"><i class="fa-solid fa-gauge-high"></i> {{ car.horsepower }} HP</div>
-                            <div class="spec-item"><i class="fa-solid fa-stopwatch"></i> 0-60: {{ car.zero_to_sixty }}</div>
+                            <div class="spec-item"><i class="fa-solid fa-stopwatch"></i> 0-60: {{ car.zero_to_sixty }}
+                            </div>
                             <div class="spec-item"><i class="fa-solid fa-users"></i> {{ car.seats }} Seats</div>
-                            <div class="spec-item"><i class="fa-solid fa-charging-station"></i> {{ car.fuel_type }}</div>
+                            <div class="spec-item"><i class="fa-solid fa-charging-station"></i> {{ car.fuel_type }}
+                            </div>
                         </div>
 
                         <div class="car-price-box">
@@ -118,9 +123,15 @@
                                 <span class="price-val">₹{{ car.daily_rate|floatformat:0 }}</span>
                                 <span class="price-period">/ day</span>
                             </div>
+                            {% if not user.is_staff and not user.is_superuser %}
                             <a href="{% url 'car_detail' car.id %}" class="btn-primary-autodrive py-2 px-3 fs-6">
                                 Reserve <i class="fa-solid fa-chevron-right ms-1"></i>
                             </a>
+                            {% else %}
+                            <a href="{% url 'car_detail' car.id %}" class="btn-outline-autodrive py-2 px-3 fs-6">
+                                View Vehicle <i class="fa-solid fa-arrow-right ms-1"></i>
+                            </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

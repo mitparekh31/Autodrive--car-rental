@@ -1,15 +1,22 @@
 /* AutoDrive Dynamic Interactivity & Calculations */
 
 document.addEventListener('DOMContentLoaded', () => {
-    
+
     // --- 1. Dynamic Pricing in Car Detail Page ---
     const startDateInput = document.getElementById('start_date');
     const endDateInput = document.getElementById('end_date');
-    
+
     const dailyRateElem = document.getElementById('daily_rate_val');
     const numDaysElem = document.getElementById('est_num_days');
     const subtotalElem = document.getElementById('est_subtotal');
     const grandTotalElem = document.getElementById('est_grand_total');
+
+    const modeSelfRadio = document.getElementById('mode_self');
+    const modeChauffeurRadio = document.getElementById('mode_chauffeur');
+    const driverSelectionBox = document.getElementById('driverSelectionBox');
+    const customerLicenseBox = document.getElementById('customerLicenseBox');
+    const driverSelect = document.getElementById('driver_id_select');
+    const driverFeeElem = document.getElementById('est_driver_fee');
 
     // Auto-sync end_date min value when start_date changes
     if (startDateInput && endDateInput) {
@@ -36,21 +43,61 @@ document.addEventListener('DOMContentLoaded', () => {
         const start = new Date(startDateInput.value);
         const end = new Date(endDateInput.value);
 
+        const isChauffeur = modeChauffeurRadio && modeChauffeurRadio.checked;
+        let driverFeePerDay = 0;
+        if (isChauffeur && driverSelect && driverSelect.selectedOptions && driverSelect.selectedOptions[0]) {
+            driverFeePerDay = parseFloat(driverSelect.selectedOptions[0].dataset.fee || 0);
+        }
+
         if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+            const initialDriverFee = isChauffeur ? driverFeePerDay : 0;
             if (numDaysElem) numDaysElem.textContent = '1 day';
             if (subtotalElem) subtotalElem.textContent = '₹' + dailyRate.toLocaleString('en-IN');
-            if (grandTotalElem) grandTotalElem.textContent = '₹' + dailyRate.toLocaleString('en-IN');
+            if (driverFeeElem) {
+                driverFeeElem.textContent = isChauffeur ? `+₹${initialDriverFee.toLocaleString('en-IN')} (Chauffeur)` : '₹0 (Self-Drive)';
+                driverFeeElem.className = isChauffeur ? 'text-warning fw-bold' : 'text-success fw-bold';
+            }
+            if (grandTotalElem) grandTotalElem.textContent = '₹' + (dailyRate + initialDriverFee).toLocaleString('en-IN');
             return;
         }
 
         const diffTime = Math.abs(end - start);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const grandTotal = dailyRate * diffDays;
+        const subtotal = dailyRate * diffDays;
+        const totalDriverFee = isChauffeur ? (driverFeePerDay * diffDays) : 0;
+        const grandTotal = subtotal + totalDriverFee;
 
         if (numDaysElem) numDaysElem.textContent = `${diffDays} day${diffDays > 1 ? 's' : ''}`;
-        if (subtotalElem) subtotalElem.textContent = '₹' + grandTotal.toLocaleString('en-IN');
+        if (subtotalElem) subtotalElem.textContent = '₹' + subtotal.toLocaleString('en-IN');
+        if (driverFeeElem) {
+            driverFeeElem.textContent = isChauffeur ? `+₹${totalDriverFee.toLocaleString('en-IN')} (Chauffeur)` : '₹0 (Self-Drive)';
+            driverFeeElem.className = isChauffeur ? 'text-warning fw-bold' : 'text-success fw-bold';
+        }
         if (grandTotalElem) grandTotalElem.textContent = '₹' + grandTotal.toLocaleString('en-IN');
     }
+
+    function updateDriveModeUI() {
+        const isChauffeur = modeChauffeurRadio && modeChauffeurRadio.checked;
+        if (driverSelectionBox) {
+            if (isChauffeur) {
+                driverSelectionBox.classList.remove('d-none');
+            } else {
+                driverSelectionBox.classList.add('d-none');
+            }
+        }
+        if (customerLicenseBox) {
+            if (isChauffeur) {
+                customerLicenseBox.classList.add('d-none');
+            } else {
+                customerLicenseBox.classList.remove('d-none');
+            }
+        }
+        calculatePrice();
+    }
+
+    if (modeSelfRadio) modeSelfRadio.addEventListener('change', updateDriveModeUI);
+    if (modeChauffeurRadio) modeChauffeurRadio.addEventListener('change', updateDriveModeUI);
+    if (driverSelect) driverSelect.addEventListener('change', calculatePrice);
 
     if (startDateInput && endDateInput) {
         endDateInput.addEventListener('change', calculatePrice);

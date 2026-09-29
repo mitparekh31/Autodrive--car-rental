@@ -9,7 +9,8 @@
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h2 text-white fw-bold mb-1"><i class="fa-regular fa-calendar-check text-info me-2"></i> My Reservations & Bookings</h1>
+            <h1 class="h2 text-white fw-bold mb-1"><i class="fa-regular fa-calendar-check text-info me-2"></i> My
+                Reservations & Bookings</h1>
             <p class="text-secondary mb-0">Track real-time status and digital receipts for your active rentals.</p>
         </div>
         <a href="{% url 'fleet_list' %}" class="btn-primary-autodrive py-2 px-3 fs-6">
@@ -30,24 +31,33 @@
                     </div>
                     <div>
                         {% if b.status == 'CONFIRMED' %}
-                            <span class="badge bg-success p-2 px-3 text-white"><i class="fa-solid fa-circle-check me-1"></i> Confirmed</span>
+                        <span class="badge bg-success p-2 px-3 text-white"><i class="fa-solid fa-circle-check me-1"></i>
+                            Confirmed</span>
                         {% elif b.status == 'COMPLETED' %}
-                            <span class="badge bg-info p-2 px-3 text-white"><i class="fa-solid fa-flag-checkered me-1"></i> Completed</span>
+                        <span class="badge bg-info p-2 px-3 text-white"><i class="fa-solid fa-flag-checkered me-1"></i>
+                            Completed</span>
                         {% else %}
-                            <span class="badge bg-danger p-2 px-3 text-white"><i class="fa-solid fa-ban me-1"></i> Cancelled</span>
+                        <span class="badge bg-danger p-2 px-3 text-white"><i class="fa-solid fa-ban me-1"></i>
+                            Cancelled</span>
                         {% endif %}
                     </div>
                 </div>
 
                 <div class="row g-3 align-items-center mb-3">
                     <div class="col-4">
-                        <img src="{{ b.car.primary_image }}" alt="{{ b.car.name }}" class="w-100 rounded-3 object-fit-cover" style="height: 95px;">
+                        <img src="{{ b.car.primary_image }}" alt="{{ b.car.name }}"
+                            class="w-100 rounded-3 object-fit-cover" style="height: 95px;">
                     </div>
                     <div class="col-8">
-                        <div class="small text-secondary mb-1"><i class="fa-regular fa-calendar me-1 text-primary"></i> <strong>Dates:</strong> {{ b.start_date|date:"M d, Y" }} &rarr; {{ b.end_date|date:"M d, Y" }}</div>
-                        <div class="small text-secondary mb-1"><i class="fa-regular fa-clock me-1 text-primary"></i> <strong>Time:</strong> {{ b.pickup_time }}</div>
-                        <div class="small text-secondary mb-1"><i class="fa-solid fa-location-dot me-1 text-danger"></i> <strong>Pick-Up:</strong> {{ b.pickup_location }}</div>
-                        <div class="small text-secondary mb-0"><i class="fa-solid fa-location-crosshairs me-1 text-info"></i> <strong>Drop-Off:</strong> {{ b.return_location }}</div>
+                        <div class="small text-secondary mb-1"><i class="fa-regular fa-calendar me-1 text-primary"></i>
+                            <strong>Dates:</strong> {{ b.start_date|date:"M d, Y" }} &rarr; {{ b.end_date|date:"M d, Y" }}</div>
+                        <div class="small text-secondary mb-1"><i class="fa-regular fa-clock me-1 text-primary"></i>
+                            <strong>Time:</strong> {{ b.pickup_time }}</div>
+                        <div class="small text-secondary mb-1"><i class="fa-solid fa-location-dot me-1 text-danger"></i>
+                            <strong>Pick-Up:</strong> {{ b.pickup_location }}</div>
+                        <div class="small text-secondary mb-0"><i
+                                class="fa-solid fa-location-crosshairs me-1 text-info"></i> <strong>Drop-Off:</strong>
+                            {{ b.return_location }}</div>
                     </div>
                 </div>
 
@@ -58,32 +68,27 @@
                         <span class="text-white fw-semibold">{{ b.num_days }} day{% if b.num_days > 1 %}s{% endif %}</span>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center pt-2 mt-2 border-top border-secondary">
+                    <div
+                        class="d-flex justify-content-between align-items-center pt-2 mt-2 border-top border-secondary">
                         <span class="fw-bold text-white">Total Amount Paid:</span>
                         <span class="h4 text-info fw-bold mb-0">₹{{ b.total_price|floatformat:0 }}</span>
                     </div>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center">
-                    <button class="btn btn-outline-info btn-sm rounded-3 btn-view-receipt text-info" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#receiptModal"
-                            data-ref="{{ b.booking_ref }}"
-                            data-car="{{ b.car.name }}"
-                            data-start="{{ b.start_date|date:'M d, Y' }}"
-                            data-end="{{ b.end_date|date:'M d, Y' }}"
-                            data-days="{{ b.num_days }}"
-                            data-hub="{{ b.pickup_location }}"
-                            data-return="{{ b.return_location }}"
-                            data-driver="{{ b.driver_name }}"
-                            data-email="{{ b.driver_email }}"
-                            data-subtotal="{{ b.subtotal|floatformat:0 }}"
-                            data-total="{{ b.total_price|floatformat:0 }}">
+                    <button class="btn btn-outline-info btn-sm rounded-3 btn-view-receipt text-info"
+                        data-bs-toggle="modal" data-bs-target="#receiptModal" data-ref="{{ b.booking_ref }}"
+                        data-car="{{ b.car.name }}" data-start="{{ b.start_date|date:'M d, Y' }}"
+                        data-end="{{ b.end_date|date:'M d, Y' }}" data-days="{{ b.num_days }}"
+                        data-hub="{{ b.pickup_location }}" data-return="{{ b.return_location }}"
+                        data-driver="{{ b.driver_name }}" data-email="{{ b.driver_email }}"
+                        data-subtotal="{{ b.subtotal|floatformat:0 }}" data-total="{{ b.total_price|floatformat:0 }}">
                         <i class="fa-solid fa-receipt me-1"></i> Digital Pass / Receipt
                     </button>
 
                     {% if b.status == 'CONFIRMED' %}
-                    <form method="POST" action="{% url 'cancel_booking' b.id %}" onsubmit="return confirm('Are you sure you want to cancel this reservation?');">
+                    <form method="POST" action="{% url 'cancel_booking' b.id %}"
+                        onsubmit="return confirm('Are you sure you want to cancel this reservation?');">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-outline-danger btn-sm rounded-3 text-danger">
                             <i class="fa-solid fa-xmark me-1"></i> Cancel Reservation
@@ -99,7 +104,8 @@
     <div class="p-5 rounded-4 glass-panel text-center">
         <i class="fa-regular fa-calendar-xmark fs-1 text-secondary mb-3"></i>
         <h3 class="h4 text-white fw-bold">No active reservations found</h3>
-        <p class="text-secondary">You haven't reserved any vehicles yet. Explore our fleet catalog to book your dream ride.</p>
+        <p class="text-secondary">You haven't reserved any vehicles yet. Explore our fleet catalog to book your dream
+            ride.</p>
         <a href="{% url 'fleet_list' %}" class="btn-primary-autodrive py-2 px-4 mt-2">Browse Fleet Catalog</a>
     </div>
     {% endif %}
@@ -120,7 +126,8 @@
                         <div class="text-secondary" style="font-size: 0.65rem;">VERIFIED RESERVATION VOUCHER</div>
                     </div>
                 </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="text-center my-3">
@@ -169,7 +176,8 @@
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-outline-secondary w-100 py-2 border-secondary text-white" data-bs-dismiss="modal">Close Pass</button>
+                <button type="button" class="btn btn-outline-secondary w-100 py-2 border-secondary text-white"
+                    data-bs-dismiss="modal">Close Pass</button>
             </div>
         </div>
     </div>

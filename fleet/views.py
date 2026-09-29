@@ -5,7 +5,8 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
 from django.db.models import Q, Sum
 from datetime import datetime, date, timedelta
-from .models import Car, Category, Booking, Review
+from decimal import Decimal
+from .models import Car, Category, Booking, Review, Driver
 
 def home_view(request):
     categories = Category.objects.all()
@@ -75,6 +76,7 @@ def car_detail_view(request, car_id):
     car = get_object_or_404(Car, id=car_id)
     similar_cars = Car.objects.filter(category=car.category).exclude(id=car.id)[:3]
     reviews = car.reviews.all().order_by('-created_at')
+    certified_drivers = Driver.objects.filter(is_available=True).order_by('-rating')
 
     today = date.today().strftime('%Y-%m-%d')
     tomorrow = (date.today() + timedelta(days=1)).strftime('%Y-%m-%d')
@@ -83,6 +85,7 @@ def car_detail_view(request, car_id):
         'car': car,
         'similar_cars': similar_cars,
         'reviews': reviews,
+        'drivers': certified_drivers,
         'today': today,
         'tomorrow': tomorrow,
     }
@@ -116,6 +119,10 @@ def add_review_view(request, car_id):
 def book_car_view(request, car_id):
     car = get_object_or_404(Car, id=car_id)
 
+    if request.user.is_staff or request.user.is_superuser:
+        messages.error(request, "Administrators cannot book vehicles. Please manage fleet operations via the Admin Dashboard.")
+        return redirect('car_detail', car_id=car.id)
+
     if request.method == 'POST':
         start_date_str = request.POST.get('start_date')
         end_date_str = request.POST.get('end_date')
@@ -126,6 +133,13 @@ def book_car_view(request, car_id):
         driver_name = request.POST.get('driver_name', '').strip() or request.user.get_full_name() or request.user.username
         driver_email = request.POST.get('driver_email', '').strip() or request.user.email or f"{request.user.username}@autodrive.io"
         driver_phone = request.POST.get('driver_phone', '').strip() or "+91 98765 43210"
+
+        drive_mode = request.POST.get('drive_mode', 'self')
+        driver_id = request.POST.get('driver_id')
+        customer_license = request.POST.get('customer_license', '').strip()
+
+        assigned_driver = None
+        chauffeur_fee = Decimal('0.00')
 
         try:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
@@ -140,7 +154,15 @@ def book_car_view(request, car_id):
 
         num_days = (end_date - start_date).days
         subtotal = car.daily_rate * num_days
-        grand_total = subtotal
+
+        if drive_mode == 'chauffeur' and driver_id:
+            try:
+                assigned_driver = Driver.objects.get(id=driver_id, is_available=True)
+                chauffeur_fee = assigned_driver.daily_fee * num_days
+            except (Driver.DoesNotExist, ValueError):
+                assigned_driver = None
+
+        grand_total = subtotal + chauffeur_fee
 
         booking = Booking.objects.create(
             user=request.user,
@@ -150,6 +172,10 @@ def book_car_view(request, car_id):
             pickup_time=pickup_time,
             pickup_location=pickup_location,
             return_location=return_location,
+            drive_mode=drive_mode,
+            assigned_driver=assigned_driver,
+            customer_license=customer_license,
+            chauffeur_fee=chauffeur_fee,
             driver_name=driver_name,
             driver_email=driver_email,
             driver_phone=driver_phone,
@@ -159,7 +185,7 @@ def book_car_view(request, car_id):
             discount_percent=0,
             discount_amount=0,
             insurance_opt=False,
-            chauffeur_opt=False,
+            chauffeur_opt=(drive_mode == 'chauffeur'),
             gps_opt=False,
             total_price=grand_total,
             status='CONFIRMED'
@@ -192,6 +218,10 @@ def compare_cars_view(request):
 
 @login_required
 def my_bookings_view(request):
+    if request.user.is_staff or request.user.is_superuser:
+        messages.info(request, "Administrators manage fleet operations from the Admin Dashboard.")
+        return redirect('admin_dashboard')
+
     user_bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
     
     context = {
@@ -271,6 +301,27 @@ def add_car_view(request):
 
 
 @login_required
+def delete_car_view(request, car_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "Access restricted to Fleet Manager administrators.")
+        return redirect('home')
+
+    car = get_object_or_404(Car, id=car_id)
+
+    if request.method == 'POST':
+        car_name = car.name
+        car.delete()
+        messages.success(request, f"🗑️ Vehicle '{car_name}' has been permanently deleted from the fleet inventory.")
+        next_page = request.POST.get('next')
+        if next_page == 'fleet':
+            return redirect('fleet_list')
+        return redirect('admin_dashboard')
+
+    messages.warning(request, "Please confirm deletion using the action button.")
+    return redirect('admin_dashboard')
+
+
+@login_required
 def admin_dashboard_view(request):
     if not (request.user.is_staff or request.user.is_superuser):
         messages.error(request, "Access restricted to Fleet Manager administrators.")
@@ -280,17 +331,24 @@ def admin_dashboard_view(request):
     total_bookings = Booking.objects.count()
     confirmed_bookings = Booking.objects.filter(status='CONFIRMED').count()
     total_revenue = Booking.objects.filter(status__in=['CONFIRMED', 'COMPLETED']).aggregate(Sum('total_price'))['total_price__sum'] or 0
+    total_drivers = Driver.objects.count()
+    active_drivers = Driver.objects.filter(is_available=True).count()
 
     recent_bookings = Booking.objects.all().order_by('-created_at')[:10]
     fleet = Car.objects.all().order_by('-created_at')
+    certified_drivers = Driver.objects.all().order_by('-rating', '-experience_years')
 
     context = {
         'total_cars': total_cars,
         'total_bookings': total_bookings,
         'confirmed_bookings': confirmed_bookings,
         'total_revenue': total_revenue,
+        'total_drivers': total_drivers,
+        'active_drivers': active_drivers,
         'recent_bookings': recent_bookings,
         'fleet': fleet,
+        'drivers': certified_drivers,
+        'categories': Category.objects.all(),
     }
     return render(request, 'fleet/admin_dashboard.html', context)
 
@@ -325,4 +383,5 @@ def logout_view(request):
     logout(request)
     messages.info(request, "You have been logged out.")
     return redirect('home')
+
 

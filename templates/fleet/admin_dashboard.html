@@ -4,44 +4,331 @@
 {% block title %}Fleet Admin Dashboard - AutoDrive{% endblock %}
 
 {% block content %}
+<style>
+/* Scoped Dark Glass Modal Styles for AutoDrive Admin Dashboard */
+.modal-autodrive .modal-content,
+#adminAddCarModal .modal-content {
+    background-color: #0B1120 !important;
+    background: #0B1120 !important;
+    color: #F8FAFC !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(56, 189, 248, 0.15) !important;
+}
+.modal-autodrive .modal-header,
+#adminAddCarModal .modal-header {
+    background-color: #0B1120 !important;
+    background: #0B1120 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 1.25rem 1.5rem !important;
+}
+.modal-autodrive .modal-body,
+#adminAddCarModal .modal-body {
+    background-color: #0B1120 !important;
+    background: #0B1120 !important;
+    padding: 1.5rem !important;
+}
+.modal-autodrive .modal-footer,
+#adminAddCarModal .modal-footer {
+    background-color: #0B1120 !important;
+    background: #0B1120 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 1.25rem 1.5rem !important;
+}
+.modal-autodrive .fleet-form-group .form-label {
+    color: #E2E8F0 !important;
+}
+.modal-autodrive .fleet-form-control,
+.modal-autodrive .fleet-form-select {
+    background-color: #131B2E !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-radius: 10px !important;
+    height: 46px !important;
+}
+.modal-autodrive .fleet-form-control:focus,
+.modal-autodrive .fleet-form-select:focus {
+    background-color: #1A2642 !important;
+    border-color: #38BDF8 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+}
+.modal-autodrive .fleet-form-select option {
+    background-color: #0F172A !important;
+    color: #FFFFFF !important;
+}
+</style>
+
 <div class="container py-4">
 
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-            <h1 class="h2 text-white fw-bold mb-1"><i class="fa-solid fa-shield-halved text-warning me-2"></i> Fleet Manager Dashboard</h1>
-            <p class="text-muted mb-0">Overview metrics, fleet inventory management, and reservation logs.</p>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-warning text-dark fw-bold px-2 py-1"><i class="fa-solid fa-shield-halved me-1"></i> ADMIN CONSOLE</span>
+                <span class="text-secondary small">Real-Time Operational Fleet Intelligence</span>
+            </div>
+            <h1 class="h2 text-white fw-bold mb-0">Fleet Manager Dashboard</h1>
         </div>
-        <a href="/admin/" target="_blank" class="btn-outline-autodrive py-2 px-3 fs-6">
-            <i class="fa-solid fa-gears me-1 text-info"></i> Django Admin Backend
-        </a>
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-warning fw-bold text-dark rounded-pill px-3 py-2" data-bs-toggle="modal" data-bs-target="#adminAddCarModal">
+                <i class="fa-solid fa-plus me-1"></i> Add Vehicle
+            </button>
+            <a href="/admin/fleet/driver/add/" target="_blank" class="btn btn-outline-info rounded-pill px-3 py-2">
+                <i class="fa-solid fa-user-plus me-1"></i> Add Driver
+            </a>
+            <a href="/admin/" target="_blank" class="btn-outline-autodrive py-2 px-3 fs-6">
+                <i class="fa-solid fa-gears me-1 text-info"></i> Django Admin Backend
+            </a>
+        </div>
     </div>
 
     <!-- Analytics Stats Cards -->
     <div class="row g-3 mb-4">
-        <div class="col-lg-3 col-6">
-            <div class="p-4 rounded-4 glass-panel border border-secondary">
-                <div class="text-muted small fw-bold mb-1">TOTAL FLEET CARS</div>
-                <div class="h2 text-white fw-bold mb-0">{{ total_cars }}</div>
+        <div class="col-lg-2 col-md-4 col-6">
+            <div class="p-3 rounded-4 glass-panel border border-secondary">
+                <div class="text-muted small fw-bold mb-1">FLEET CARS</div>
+                <div class="h3 text-white fw-bold mb-0">{{ total_cars }}</div>
             </div>
         </div>
-        <div class="col-lg-3 col-6">
-            <div class="p-4 rounded-4 glass-panel border border-secondary">
+        <div class="col-lg-2 col-md-4 col-6">
+            <div class="p-3 rounded-4 glass-panel border border-secondary">
                 <div class="text-muted small fw-bold mb-1">TOTAL BOOKINGS</div>
-                <div class="h2 text-info fw-bold mb-0">{{ total_bookings }}</div>
+                <div class="h3 text-info fw-bold mb-0">{{ total_bookings }}</div>
             </div>
         </div>
-        <div class="col-lg-3 col-6">
-            <div class="p-4 rounded-4 glass-panel border border-secondary">
+        <div class="col-lg-2 col-md-4 col-6">
+            <div class="p-3 rounded-4 glass-panel border border-secondary">
                 <div class="text-muted small fw-bold mb-1">CONFIRMED ACTIVE</div>
-                <div class="h2 text-success fw-bold mb-0">{{ confirmed_bookings }}</div>
+                <div class="h3 text-success fw-bold mb-0">{{ confirmed_bookings }}</div>
             </div>
         </div>
-        <div class="col-lg-3 col-6">
-            <div class="p-4 rounded-4 glass-panel border border-secondary">
-                <div class="text-muted small fw-bold mb-1">GROSS REVENUE</div>
-                <div class="h2 text-primary fw-bold mb-0">₹{{ total_revenue|floatformat:0 }}</div>
+        <div class="col-lg-3 col-md-6 col-6">
+            <div class="p-3 rounded-4 glass-panel border border-secondary">
+                <div class="text-muted small fw-bold mb-1">CERTIFIED DRIVERS</div>
+                <div class="h3 text-warning fw-bold mb-0">{{ total_drivers }} <span class="fs-6 fw-normal text-success">({{ active_drivers }} Active)</span></div>
             </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-12">
+            <div class="p-3 rounded-4 glass-panel border border-secondary">
+                <div class="text-muted small fw-bold mb-1">GROSS REVENUE</div>
+                <div class="h3 text-primary fw-bold mb-0">₹{{ total_revenue|floatformat:0 }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certified Drivers Roster Section -->
+    <div class="p-4 rounded-4 glass-panel mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+            <div>
+                <h3 class="h5 text-white fw-bold mb-1">
+                    <i class="fa-solid fa-user-shield text-warning me-2"></i> Certified Chauffeur Fleet & Drivers Roster
+                </h3>
+                <p class="text-muted small mb-0">
+                    Detailed list of certified drivers, commercial licenses, performance ratings, languages, contact details, and duty status.
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/admin/fleet/driver/add/" target="_blank" class="btn btn-sm btn-warning fw-bold text-dark rounded-pill px-3 py-2">
+                    <i class="fa-solid fa-plus me-1"></i> Add Driver
+                </a>
+                <a href="/admin/fleet/driver/" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-3 py-2">
+                    <i class="fa-solid fa-sliders me-1"></i> Driver Admin
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle mb-0">
+                <thead>
+                    <tr class="border-secondary">
+                        <th class="bg-dark text-secondary small text-uppercase">Chauffeur</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Specialization Badge</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Rating & Trips</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Experience & License</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Languages</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Contact Details</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Daily Fee</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Duty Status</th>
+                        <th class="bg-dark text-secondary small text-uppercase text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in drivers %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="driver-table-avatar">
+                                    <i class="fa-solid fa-user-tie"></i>
+                                </div>
+                                <div>
+                                    <div class="text-white fw-bold">{{ d.name }}</div>
+                                    <div class="text-secondary small text-truncate" style="max-width: 200px;" title="{{ d.bio }}">
+                                        {{ d.bio }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="driver-badge-pill">
+                                <i class="fa-solid fa-award me-1"></i> {{ d.badge_type }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-1 text-warning fw-bold">
+                                <i class="fa-solid fa-star"></i> {{ d.rating }}
+                            </div>
+                            <div class="text-secondary small">{{ d.trips_completed }} trips</div>
+                        </td>
+                        <td>
+                            <div class="text-white fw-semibold small">
+                                <i class="fa-solid fa-clock-rotate-left text-info me-1"></i> {{ d.experience_years }} Yrs Exp.
+                            </div>
+                            <div class="mt-1">
+                                <span class="driver-license-code">{{ d.license_number }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-light small">{{ d.languages }}</span>
+                        </td>
+                        <td>
+                            <div class="small">
+                                <a href="tel:{{ d.phone }}" class="text-info text-decoration-none d-block">
+                                    <i class="fa-solid fa-phone me-1"></i> {{ d.phone }}
+                                </a>
+                                {% if d.email %}
+                                <a href="mailto:{{ d.email }}" class="text-secondary text-decoration-none d-block mt-1">
+                                    <i class="fa-solid fa-envelope me-1"></i> {{ d.email }}
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="text-info fw-bold">₹{{ d.daily_fee|floatformat:0 }}</div>
+                            <div class="text-secondary" style="font-size: 0.72rem;">/ rental day</div>
+                        </td>
+                        <td>
+                            {% if d.is_available %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Available
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary px-2 py-1">
+                                    <i class="fa-solid fa-pause me-1"></i> Off-Duty
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="/admin/fleet/driver/{{ d.id }}/change/" target="_blank" class="btn btn-sm btn-outline-secondary text-white rounded-pill px-2 py-1" title="Edit in Django Admin">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">No certified chauffeurs registered yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Fleet Inventory Table with Delete Car Feature -->
+    <div class="p-4 rounded-4 glass-panel mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+            <div>
+                <h3 class="h5 text-white fw-bold mb-1">
+                    <i class="fa-solid fa-car text-info me-2"></i> Fleet Inventory Management
+                </h3>
+                <p class="text-muted small mb-0">Active vehicle specifications, categories, rates, catalog links, and deletion controls.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-warning fw-bold text-dark rounded-pill px-3 py-2" data-bs-toggle="modal" data-bs-target="#adminAddCarModal">
+                    <i class="fa-solid fa-plus me-1"></i> Add Vehicle
+                </button>
+                <a href="/admin/fleet/car/" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-3 py-2">
+                    <i class="fa-solid fa-sliders me-1"></i> Django Car Admin
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-dark table-hover align-middle mb-0">
+                <thead>
+                    <tr class="border-secondary">
+                        <th class="bg-dark text-secondary small text-uppercase">Vehicle</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Category</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Power & Speed</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Transmission / Fuel</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Daily Rate</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Status</th>
+                        <th class="bg-dark text-secondary small text-uppercase text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in fleet %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                {% if c.image %}
+                                    <img src="{{ c.image.url }}" alt="{{ c.name }}" class="rounded-3 object-fit-cover" style="width: 50px; height: 35px;">
+                                {% elif c.image_url %}
+                                    <img src="{{ c.image_url }}" alt="{{ c.name }}" class="rounded-3 object-fit-cover" style="width: 50px; height: 35px;">
+                                {% else %}
+                                    <div class="rounded-3 bg-secondary d-flex align-items-center justify-content-center" style="width: 50px; height: 35px;">
+                                        <i class="fa-solid fa-car text-white"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <a href="{% url 'car_detail' c.id %}" class="text-white fw-bold text-decoration-none hover-primary">
+                                        {{ c.name }}
+                                    </a>
+                                    <div class="text-secondary small">{{ c.make }} {{ c.model }} ({{ c.year }})</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary border border-secondary">{{ c.category.name }}</span>
+                        </td>
+                        <td>
+                            <div class="text-white small fw-semibold">{{ c.horsepower }} HP &bull; {{ c.zero_to_sixty }}</div>
+                            <div class="text-secondary small">Top: {{ c.top_speed }}</div>
+                        </td>
+                        <td>
+                            <div class="text-light small">{{ c.transmission }}</div>
+                            <div class="text-secondary small">{{ c.fuel_type }}</div>
+                        </td>
+                        <td>
+                            <div class="text-info fw-bold">₹{{ c.daily_rate|floatformat:0 }}</div>
+                            <div class="text-secondary small">per day</div>
+                        </td>
+                        <td>
+                            {% if c.is_available %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Available</span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Reserved</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'car_detail' c.id %}" class="btn btn-sm btn-outline-info rounded-pill px-2 py-1" title="View Public Page">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                            <a href="/admin/fleet/car/{{ c.id }}/change/" target="_blank" class="btn btn-sm btn-outline-secondary text-white rounded-pill px-2 py-1 ms-1" title="Edit in Django Admin">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1 ms-1" data-bs-toggle="modal" data-bs-target="#adminDeleteCarModal{{ c.id }}" title="Delete {{ c.name }}">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">No vehicles in fleet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -51,13 +338,14 @@
         <div class="table-responsive">
             <table class="table table-dark table-hover align-middle mb-0">
                 <thead>
-                    <tr>
-                        <th class="bg-dark">Ref #</th>
-                        <th class="bg-dark">User</th>
-                        <th class="bg-dark">Vehicle</th>
-                        <th class="bg-dark">Dates</th>
-                        <th class="bg-dark">Total</th>
-                        <th class="bg-dark">Status</th>
+                    <tr class="border-secondary">
+                        <th class="bg-dark text-secondary small text-uppercase">Ref #</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Customer</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Vehicle</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Drive Mode / Driver</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Dates</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Total</th>
+                        <th class="bg-dark text-secondary small text-uppercase">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -66,6 +354,13 @@
                         <td><span class="badge bg-primary">#{{ b.booking_ref }}</span></td>
                         <td class="fw-semibold text-white">{{ b.user.username }}</td>
                         <td class="text-info fw-semibold">{{ b.car.name }}</td>
+                        <td>
+                            {% if b.drive_mode == 'chauffeur' and b.assigned_driver %}
+                                <span class="badge bg-primary text-white"><i class="fa-solid fa-user-tie me-1"></i> {{ b.assigned_driver.name }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary text-white"><i class="fa-solid fa-car me-1"></i> Self-Drive</span>
+                            {% endif %}
+                        </td>
                         <td class="small text-muted">{{ b.start_date|date:"M d" }} - {{ b.end_date|date:"M d, Y" }}</td>
                         <td class="text-info fw-bold">₹{{ b.total_price|floatformat:0 }}</td>
                         <td>
@@ -80,7 +375,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center text-muted">No reservations yet.</td>
+                        <td colspan="7" class="text-center text-muted">No reservations yet.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -89,4 +384,223 @@
     </div>
 
 </div>
+
+<!-- Admin Add New Vehicle Modal (Color Matched & Equal Alignment) -->
+<div class="modal fade modal-autodrive" id="adminAddCarModal" tabindex="-1" aria-labelledby="adminAddCarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <form method="POST" action="{% url 'add_car' %}" enctype="multipart/form-data" class="modal-content shadow-lg" style="background-color: #0B1120 !important; background: #0B1120 !important; color: #FFFFFF !important; border: 1px solid rgba(56, 189, 248, 0.25) !important; border-radius: 20px !important;">
+            {% csrf_token %}
+            <div class="modal-header" style="background-color: #0B1120 !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important; flex-shrink: 0;">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="brand-logo-box bg-warning text-dark" style="width: 36px; height: 36px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                        <i class="fa-solid fa-car-side"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title text-white fw-bold h6 mb-0" id="adminAddCarModalLabel">Add New Vehicle to Fleet</h5>
+                        <div class="text-info small fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">FLEET INVENTORY SPECIFICATION CONSOLE</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body" style="background-color: #0B1120 !important; overflow-y: auto; max-height: calc(85vh - 150px); padding: 1.5rem;">
+                <div class="row g-3">
+                    <!-- Row 1: Vehicle Name & Category -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-car text-info me-1"></i> Vehicle Display Name *</label>
+                            <input type="text" name="name" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. Porsche 911 GT3 RS" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-layer-group text-info me-1"></i> Fleet Category *</label>
+                            <select name="category" class="form-select fleet-form-select" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" required>
+                                {% for cat in categories %}
+                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Make/Brand & Model -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-industry text-info me-1"></i> Make / Brand *</label>
+                            <input type="text" name="make" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. Porsche" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-tag text-info me-1"></i> Model Name *</label>
+                            <input type="text" name="model" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. GT3 RS" required>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Model Year & Daily Rate -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-calendar text-info me-1"></i> Model Year *</label>
+                            <input type="number" name="year" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" value="2025" min="2015" max="2030" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-indian-rupee-sign text-info me-1"></i> Daily Rate (₹) *</label>
+                            <input type="number" step="100" name="daily_rate" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. 7999" required>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Horsepower & 0-60 Time -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-gauge-high text-info me-1"></i> Horsepower (HP) *</label>
+                            <input type="number" name="horsepower" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. 525" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-stopwatch text-info me-1"></i> 0-60 MPH Acceleration *</label>
+                            <input type="text" name="zero_to_sixty" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. 3.0s" required>
+                        </div>
+                    </div>
+
+                    <!-- Row 5: Top Speed & Seats -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-tachograph-digital text-info me-1"></i> Top Speed *</label>
+                            <input type="text" name="top_speed" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. 197 mph" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-users text-info me-1"></i> Seating Capacity *</label>
+                            <input type="number" name="seats" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" value="2" min="1" max="9" required>
+                        </div>
+                    </div>
+
+                    <!-- Row 6: Transmission & Powertrain -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-gears text-info me-1"></i> Transmission *</label>
+                            <select name="transmission" class="form-select fleet-form-select" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;">
+                                <option value="Automatic">Automatic</option>
+                                <option value="Manual">Manual</option>
+                                <option value="Direct-Drive">Direct-Drive Dual Motor</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-charging-station text-info me-1"></i> Powertrain / Fuel *</label>
+                            <select name="fuel_type" class="form-select fleet-form-select" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;">
+                                <option value="Gasoline">Gasoline</option>
+                                <option value="Electric">Electric</option>
+                                <option value="Hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 7: Luggage & Tagline -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-suitcase text-info me-1"></i> Luggage Capacity</label>
+                            <input type="text" name="luggage_capacity" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. 2 Bags">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-quote-left text-info me-1"></i> Vehicle Tagline</label>
+                            <input type="text" name="tagline" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. Supercharged Track Perfection">
+                        </div>
+                    </div>
+
+                    <!-- Row 8: Image File Upload & Features -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-image text-info me-1"></i> Vehicle Photo File *</label>
+                            <input type="file" name="image" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #94A3B8 !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" accept="image/*" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-star text-info me-1"></i> Included Features</label>
+                            <input type="text" name="features" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. Carbon Ceramic Brakes, Track Pack">
+                        </div>
+                    </div>
+
+                    <!-- Row 9: Feature on Home Page -->
+                    <div class="col-md-12">
+                        <div class="form-check p-3 rounded-3 mt-1" style="background-color: #131B2E; border: 1px solid rgba(255, 255, 255, 0.12);">
+                            <input class="form-check-input" type="checkbox" name="is_featured" id="admin_chk_featured" checked>
+                            <label class="form-check-label text-white small fw-semibold ms-2" for="admin_chk_featured">
+                                <i class="fa-solid fa-award text-warning me-1"></i> Feature this vehicle prominently in Featured Showcase on Home Page
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="background-color: #0B1120 !important; border-top: 1px solid rgba(255, 255, 255, 0.1) !important; flex-shrink: 0; position: sticky; bottom: 0; z-index: 1055;">
+                <button type="button" class="btn btn-outline-secondary py-2 px-3 border-secondary text-white rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-warning py-2 px-4 fw-bold text-dark rounded-pill shadow-lg">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Save &amp; Add Vehicle
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Admin Delete Car Confirmation Modals -->
+{% for c in fleet %}
+<div class="modal fade modal-autodrive" id="adminDeleteCarModal{{ c.id }}" tabindex="-1" aria-labelledby="adminDeleteCarModalLabel{{ c.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg" style="background-color: #0B1120 !important; background: #0B1120 !important; color: #FFFFFF !important; border: 1px solid rgba(239, 68, 68, 0.35) !important; border-radius: 20px !important;">
+            <div class="modal-header" style="background-color: #0B1120 !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="p-2 rounded-3 bg-danger text-white fs-5" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title text-white fw-bold h6 mb-0" id="adminDeleteCarModalLabel{{ c.id }}">Delete Vehicle</h5>
+                        <div class="text-danger small fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">PERMANENT REMOVAL</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4" style="background-color: #0B1120 !important;">
+                <p class="text-light mb-3">Are you sure you want to permanently delete this vehicle from the AutoDrive fleet inventory?</p>
+                <div class="p-3 rounded-3 mb-3 d-flex align-items-center gap-3" style="background-color: #131B2E; border: 1px solid rgba(255, 255, 255, 0.12);">
+                    {% if c.image %}
+                        <img src="{{ c.image.url }}" alt="{{ c.name }}" class="rounded-3 object-fit-cover" style="width: 64px; height: 44px;">
+                    {% elif c.image_url %}
+                        <img src="{{ c.image_url }}" alt="{{ c.name }}" class="rounded-3 object-fit-cover" style="width: 64px; height: 44px;">
+                    {% else %}
+                        <div class="rounded-3 bg-secondary d-flex align-items-center justify-content-center" style="width: 64px; height: 44px;">
+                            <i class="fa-solid fa-car text-white"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <div class="text-white fw-bold">{{ c.name }}</div>
+                        <div class="text-secondary small">{{ c.make }} {{ c.model }} ({{ c.year }}) &bull; ₹{{ c.daily_rate|floatformat:0 }}/day</div>
+                    </div>
+                </div>
+                <div class="alert alert-danger py-2 px-3 small border-0 mb-0 rounded-3 d-flex align-items-center gap-2" style="background: rgba(239, 68, 68, 0.15); color: #FCA5A5;">
+                    <i class="fa-solid fa-triangle-exclamation text-danger fs-6"></i>
+                    <span>This vehicle will be permanently removed from all listings, catalog views, and inventory metrics.</span>
+                </div>
+            </div>
+            <div class="modal-footer" style="background-color: #0B1120 !important; border-top: 1px solid rgba(255, 255, 255, 0.1) !important;">
+                <button type="button" class="btn btn-outline-secondary py-2 px-3 border-secondary text-white rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{% url 'delete_car' c.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="dashboard">
+                    <button type="submit" class="btn btn-danger py-2 px-4 fw-bold rounded-pill">
+                        <i class="fa-solid fa-trash-can me-1"></i> Confirm Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}

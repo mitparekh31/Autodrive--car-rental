@@ -18,7 +18,8 @@ cd "c:\Z\SOU\Semester 3\CRS"
 To ensure all vehicles are loaded with the latest INR pricing and demo accounts:
 ```powershell
 python seed_fleet.py
-```python -m venv venvpython -m venv venv
+```
+
 
 ### Step 3: Run the Development Server
 ```powershell

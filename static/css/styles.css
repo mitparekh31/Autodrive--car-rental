@@ -23,13 +23,15 @@
 }
 
 /* Base resets */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 body {
   background-color: var(--bg-dark) !important;
-  background-image: 
+  background-image:
     radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.18) 0%, transparent 40%),
     radial-gradient(circle at 85% 65%, rgba(56, 189, 248, 0.12) 0%, transparent 45%);
   background-attachment: fixed;
@@ -44,7 +46,25 @@ body {
 }
 
 /* Global Text Visibility Rules */
-body, p, span, div, small, label, h1, h2, h3, h4, h5, h6, input, select, textarea, button, a, td, th {
+body,
+p,
+span,
+div,
+small,
+label,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+input,
+select,
+textarea,
+button,
+a,
+td,
+th {
   color: #FFFFFF;
 }
 
@@ -58,14 +78,26 @@ a:hover {
   text-decoration: none !important;
 }
 
-h1, h2, h3, h4, h5, h6, .brand-font {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.brand-font {
   font-family: 'Outfit', sans-serif !important;
   letter-spacing: -0.02em;
   color: #FFFFFF !important;
 }
 
 /* Utility Text Contrast Classes */
-.text-muted, .user-meta-sub, .car-tagline, footer p, footer span, footer div, .form-text {
+.text-muted,
+.user-meta-sub,
+.car-tagline,
+footer p,
+footer span,
+footer div,
+.form-text {
   color: #CBD5E1 !important;
 }
 
@@ -73,14 +105,32 @@ h1, h2, h3, h4, h5, h6, .brand-font {
   color: #E2E8F0 !important;
 }
 
-.text-primary { color: #60A5FA !important; }
-.text-info { color: #38BDF8 !important; }
-.text-warning { color: #FBBF24 !important; }
-.text-success { color: #34D399 !important; }
-.text-danger { color: #F87171 !important; }
-.text-white { color: #FFFFFF !important; }
+.text-primary {
+  color: #60A5FA !important;
+}
 
-.form-label, label {
+.text-info {
+  color: #38BDF8 !important;
+}
+
+.text-warning {
+  color: #FBBF24 !important;
+}
+
+.text-success {
+  color: #34D399 !important;
+}
+
+.text-danger {
+  color: #F87171 !important;
+}
+
+.text-white {
+  color: #FFFFFF !important;
+}
+
+.form-label,
+label {
   color: #F1F5F9 !important;
   font-weight: 600 !important;
 }
@@ -89,13 +139,16 @@ h1, h2, h3, h4, h5, h6, .brand-font {
 ::-webkit-scrollbar {
   width: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--bg-dark);
 }
+
 ::-webkit-scrollbar-thumb {
   background: #334155;
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-blue);
 }
@@ -166,7 +219,8 @@ h1, h2, h3, h4, h5, h6, .brand-font {
   gap: 8px;
 }
 
-.nav-link-custom:hover, .nav-link-custom.active {
+.nav-link-custom:hover,
+.nav-link-custom.active {
   color: #FFFFFF !important;
   background: rgba(255, 255, 255, 0.12) !important;
 }
@@ -345,44 +399,97 @@ h1, h2, h3, h4, h5, h6, .brand-font {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
 }
 
-.car-img-wrapper {
+/* Vehicle Card Image Aspect Ratio & Badges */
+.car-card .car-img-wrapper,
+.car-card .car-img-box,
+.car-img-wrapper,
+.car-img-box {
   position: relative;
   width: 100%;
-  height: 220px;
+  height: 230px;
+  aspect-ratio: 16 / 10;
   overflow: hidden;
   background: #090D16;
+  border-top-left-radius: 19px;
+  border-top-right-radius: 19px;
+  display: block;
 }
 
-.car-img-wrapper img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.car-card .car-img-wrapper img,
+.car-card .car-img-box img,
+.car-img-wrapper img,
+.car-img-box img,
+.car-img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  display: block !important;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.car-card:hover .car-img-wrapper img,
+.car-card:hover .car-img-box img,
+.car-card:hover .car-img {
+  transform: scale(1.06);
 }
 
 .badge-availability {
   position: absolute;
   top: 14px;
   left: 14px;
-  background: #064E3B !important;
+  background: rgba(6, 78, 59, 0.9) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid #10B981 !important;
   color: #6EE7B7 !important;
   font-size: 0.74rem;
   font-weight: 700;
   padding: 5px 12px;
   border-radius: 50px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
 }
 
-.badge-category {
+.badge-category,
+.car-badge-category {
   position: absolute;
   top: 14px;
   right: 14px;
-  background: #1E293B !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  color: #F8FAFC !important;
+  background: rgba(15, 23, 42, 0.88) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  color: #38BDF8 !important;
   font-size: 0.74rem;
-  font-weight: 600;
+  font-weight: 700;
   padding: 5px 12px;
   border-radius: 50px;
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  display: inline-flex;
+  align-items: center;
+}
+
+.car-badge-featured {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: linear-gradient(135deg, #F59E0B, #D97706) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #070A12 !important;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 50px;
+  letter-spacing: 0.05em;
+  z-index: 2;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.45);
+  display: inline-flex;
+  align-items: center;
 }
 
 .car-card-body {
@@ -456,7 +563,8 @@ h1, h2, h3, h4, h5, h6, .brand-font {
   border-color: var(--border-color) !important;
 }
 
-.table-compare th, .table-compare td {
+.table-compare th,
+.table-compare td {
   background: #0F172A !important;
   padding: 1.1rem;
   vertical-align: middle;
@@ -520,7 +628,8 @@ footer a:hover {
 }
 
 /* Form Controls Dark Mode & High Contrast */
-.form-control, .form-select {
+.form-control,
+.form-select {
   background-color: #0F172A !important;
   border: 1px solid rgba(255, 255, 255, 0.25) !important;
   color: #FFFFFF !important;
@@ -528,7 +637,8 @@ footer a:hover {
   padding: 0.65rem 1rem;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
   background-color: #1E293B !important;
   border-color: #38BDF8 !important;
   box-shadow: 0 0 12px var(--cyan-glow) !important;
@@ -543,4 +653,184 @@ footer a:hover {
 select option {
   background-color: #0F172A !important;
   color: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   MODAL & ADD CAR FORM EQUAL ALIGNMENT & COLOR MATCHING STYLES
+   ========================================================================== */
+.modal-content,
+.modal-autodrive .modal-content,
+#addCarModal .modal-content,
+#adminAddCarModal .modal-content,
+form.modal-content {
+  background: #0B1120 !important;
+  background-color: #0B1120 !important;
+  color: #F8FAFC !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(56, 189, 248, 0.15) !important;
+}
+
+/* Ensure modal dialog scrollable keeps header and footer always pinned and body scrollable */
+.modal-dialog-scrollable .modal-content,
+.modal-dialog-scrollable form.modal-content {
+  max-height: calc(100vh - 3rem) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.modal-dialog-scrollable .modal-content > form {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  overflow: hidden !important;
+  min-height: 0 !important;
+  height: 100% !important;
+}
+
+.modal-header,
+.modal-autodrive .modal-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: #0B1120 !important;
+  padding: 1.25rem 1.5rem !important;
+  flex-shrink: 0 !important;
+}
+
+.modal-body,
+.modal-autodrive .modal-body,
+.modal-dialog-scrollable .modal-body {
+  background: #0B1120 !important;
+  padding: 1.5rem !important;
+  overflow-y: auto !important;
+  flex: 1 1 auto !important;
+}
+
+.modal-footer,
+.modal-autodrive .modal-footer,
+.modal-dialog-scrollable .modal-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: #0B1120 !important;
+  padding: 1.25rem 1.5rem !important;
+  flex-shrink: 0 !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 1055 !important;
+}
+
+.fleet-form-group {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.fleet-form-group .form-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 0.84rem !important;
+  font-weight: 600 !important;
+  color: #E2E8F0 !important;
+  margin-bottom: 0.45rem !important;
+  min-height: 20px;
+}
+
+.fleet-form-group .form-label i {
+  color: #38BDF8 !important;
+  font-size: 0.85rem;
+}
+
+.fleet-form-control,
+.fleet-form-select {
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+  background-color: #131B2E !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 10px !important;
+  padding: 0.6rem 0.9rem !important;
+  font-size: 0.88rem !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease !important;
+  width: 100% !important;
+}
+
+.fleet-form-control::placeholder {
+  color: #64748B !important;
+  opacity: 1 !important;
+}
+
+.fleet-form-control:focus,
+.fleet-form-select:focus {
+  background-color: #1A2642 !important;
+  border-color: #38BDF8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+  color: #FFFFFF !important;
+  outline: none !important;
+}
+
+.fleet-form-select option {
+  background-color: #0F172A !important;
+  color: #FFFFFF !important;
+  padding: 8px !important;
+}
+
+/* For file inputs to ensure equal height and alignment */
+input[type="file"].fleet-form-control {
+  padding: 0.45rem 0.75rem !important;
+  line-height: 1.6;
+}
+
+input[type="file"].fleet-form-control::file-selector-button {
+  background: #38BDF8;
+  color: #070A12;
+  font-weight: 700;
+  border: none;
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  margin-right: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+input[type="file"].fleet-form-control::file-selector-button:hover {
+  background: #7DD3FC;
+}
+
+/* Admin Dashboard Certified Drivers Table Styles */
+.driver-table-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #38BDF8;
+  flex-shrink: 0;
+}
+
+.driver-badge-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  display: inline-block;
+}
+
+.driver-license-code {
+  font-family: monospace;
+  font-size: 0.75rem;
+  background: #0B0F19;
+  color: #94A3B8;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }

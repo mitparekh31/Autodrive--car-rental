@@ -4,6 +4,61 @@
 {% block title %}Cars & Fleet Inventory - AutoDrive{% endblock %}
 
 {% block content %}
+<style>
+/* Scoped Dark Glass Modal Styles for AutoDrive */
+.modal-autodrive .modal-content,
+#addCarModal .modal-content {
+    background-color: #0B1120 !important;
+    background: #0B1120 !important;
+    color: #F8FAFC !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(56, 189, 248, 0.15) !important;
+}
+.modal-autodrive .modal-header,
+#addCarModal .modal-header {
+    background-color: #0B1120 !important;
+    background: #0B1120 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 1.25rem 1.5rem !important;
+}
+.modal-autodrive .modal-body,
+#addCarModal .modal-body {
+    background-color: #0B1120 !important;
+    background: #0B1120 !important;
+    padding: 1.5rem !important;
+}
+.modal-autodrive .modal-footer,
+#addCarModal .modal-footer {
+    background-color: #0B1120 !important;
+    background: #0B1120 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 1.25rem 1.5rem !important;
+}
+.modal-autodrive .fleet-form-group .form-label {
+    color: #E2E8F0 !important;
+}
+.modal-autodrive .fleet-form-control,
+.modal-autodrive .fleet-form-select {
+    background-color: #131B2E !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-radius: 10px !important;
+    height: 46px !important;
+}
+.modal-autodrive .fleet-form-control:focus,
+.modal-autodrive .fleet-form-select:focus {
+    background-color: #1A2642 !important;
+    border-color: #38BDF8 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+}
+.modal-autodrive .fleet-form-select option {
+    background-color: #0F172A !important;
+    color: #FFFFFF !important;
+}
+</style>
+
 <div class="container py-4">
 
     <!-- Header & Search Bar -->
@@ -40,7 +95,7 @@
                 <select name="category" class="form-select">
                     <option value="">All Categories</option>
                     {% for cat in categories %}
-                        <option value="{{ cat.slug }}" {% if selected_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+                    <option value="{{ cat.slug }}" {% if selected_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -66,57 +121,102 @@
             </div>
 
             <div class="col-lg-2 col-md-4 d-flex gap-2">
-                <button type="submit" class="btn-primary-autodrive py-2 w-100 justify-content-center">
+                <button type="submit" class="btn-primary-autodrive w-100 py-2 justify-content-center">
                     Filter <i class="fa-solid fa-sliders ms-1"></i>
                 </button>
-                <a href="{% url 'fleet_list' %}" class="btn btn-outline-secondary py-2 px-3 border-secondary text-white" title="Reset Filters"><i class="fa-solid fa-rotate-left"></i></a>
+                <a href="{% url 'fleet_list' %}" class="btn btn-outline-secondary py-2 px-3 border-secondary text-white" title="Reset Filters">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
             </div>
         </form>
     </div>
 
-    <!-- Active Filter Tags -->
+    <!-- Active Filters Summary -->
     {% if query or selected_category or selected_fuel or sort_by != 'default' %}
-    <div class="mb-4 d-flex align-items-center gap-2 flex-wrap">
-        <span class="text-white small fw-bold">Active Filters:</span>
+    <div class="d-flex align-items-center gap-2 flex-wrap mb-4">
+        <span class="text-secondary small">Active Filters:</span>
         {% if query %}
-            <span class="badge bg-secondary p-2 px-3 text-white">Search: "{{ query }}"</span>
+        <span class="badge bg-secondary p-2 px-3 text-white">Keyword: "{{ query }}"</span>
         {% endif %}
         {% if selected_category %}
-            <span class="badge bg-primary p-2 px-3 text-white">Category: {{ selected_category }}</span>
+        <span class="badge bg-primary p-2 px-3 text-white">Category: {{ selected_category }}</span>
         {% endif %}
         {% if selected_fuel %}
-            <span class="badge bg-info p-2 px-3 text-white">Fuel: {{ selected_fuel }}</span>
+        <span class="badge bg-info p-2 px-3 text-white">Fuel: {{ selected_fuel }}</span>
         {% endif %}
         <a href="{% url 'fleet_list' %}" class="text-danger small text-decoration-none ms-2"><i class="fa-solid fa-xmark me-1"></i> Clear All</a>
     </div>
     {% endif %}
 
-    <!-- Fleet Inventory Grid -->
+    <!-- Cars Grid -->
     <div class="row g-4">
         {% for car in cars %}
-        <div class="col-lg-4 col-md-6">
-            <div class="car-card">
-                <div class="car-img-wrapper">
-                    <img src="{{ car.primary_image }}" alt="{{ car.name }}">
-                    <span class="badge-availability">
-                        <i class="fa-solid fa-circle text-success me-1"></i> Available Now
-                    </span>
-                    <span class="badge-category">{{ car.category.name }}</span>
+        <div class="col-xl-4 col-md-6">
+            <div class="card car-card h-100">
+                <div class="car-img-box car-img-wrapper" style="height: 230px; aspect-ratio: 16 / 10; overflow: hidden; position: relative;">
+                    <img src="{{ car.primary_image }}" alt="{{ car.name }}" class="car-img w-100 h-100 object-fit-cover" loading="lazy">
+                    <div class="car-badge-category">
+                        <i class="fa-solid {{ car.category.icon }} me-1"></i> {{ car.category.name }}
+                    </div>
+                    {% if car.is_featured %}
+                    <div class="car-badge-featured">
+                        <i class="fa-solid fa-bolt me-1"></i> FEATURED
+                    </div>
+                    {% endif %}
                 </div>
+
                 <div class="car-card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <h3 class="car-title mb-0">{{ car.name }}</h3>
-                        <span class="badge bg-secondary text-white">{{ car.year }}</span>
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <h2 class="car-title h5 mb-0">{{ car.name }}</h2>
+                        <span class="badge bg-secondary border border-secondary">{{ car.year }}</span>
                     </div>
                     <div class="car-tagline">{{ car.tagline }}</div>
 
+                    <!-- Specs 2x2 Grid -->
                     <div class="specs-grid">
-                        <div class="spec-item"><i class="fa-solid fa-gauge-high"></i> {{ car.horsepower }} HP</div>
-                        <div class="spec-item"><i class="fa-solid fa-stopwatch"></i> 0-60: {{ car.zero_to_sixty }}</div>
-                        <div class="spec-item"><i class="fa-solid fa-users"></i> {{ car.seats }} Seats</div>
-                        <div class="spec-item"><i class="fa-solid fa-charging-station"></i> {{ car.fuel_type }}</div>
-                        <div class="spec-item"><i class="fa-solid fa-gears"></i> {{ car.transmission }}</div>
-                        <div class="spec-item"><i class="fa-solid fa-tachograph-digital"></i> {{ car.top_speed }}</div>
+                        <div class="spec-item">
+                            <i class="fa-solid fa-gauge-high"></i>
+                            <span>{{ car.horsepower }} HP</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fa-solid fa-stopwatch"></i>
+                            <span>0-60: {{ car.zero_to_sixty }}</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fa-solid fa-tachograph-digital"></i>
+                            <span>{{ car.top_speed }}</span>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fa-solid fa-users"></i>
+                            <span>{{ car.seats }} Seats</span>
+                        </div>
+                    </div>
+
+                    <!-- Drive Mode Badges -->
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="badge bg-dark border border-secondary text-light small py-1 px-2">
+                            <i class="fa-solid fa-id-card text-info me-1"></i> Self-Drive
+                        </span>
+                        <span class="badge bg-dark border border-secondary text-light small py-1 px-2">
+                            <i class="fa-solid fa-user-tie text-warning me-1"></i> Chauffeur Option
+                        </span>
+                    </div>
+
+                    {% if not user.is_staff and not user.is_superuser %}
+                    <div class="car-price-box">
+                        <div>
+                            <span class="price-val">₹{{ car.daily_rate|floatformat:0 }}</span>
+                            <span class="price-period">/ day</span>
+                        </div>
+                        <a href="{% url 'car_detail' car.id %}" class="btn-primary-autodrive py-2 px-3 fs-6">
+                            Reserve Ride <i class="fa-solid fa-chevron-right ms-1"></i>
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="d-flex align-items-center justify-content-between mb-3 pt-2 border-top border-secondary small text-secondary" style="font-size: 0.78rem;">
+                        <span class="text-success"><i class="fa-solid fa-circle-check me-1"></i> Fleet Inventory</span>
+                        <span class="text-secondary">&bull;</span>
+                        <span class="text-info"><i class="fa-solid fa-shield-halved me-1"></i> Admin View</span>
                     </div>
 
                     <div class="car-price-box">
@@ -124,10 +224,16 @@
                             <span class="price-val">₹{{ car.daily_rate|floatformat:0 }}</span>
                             <span class="price-period">/ day</span>
                         </div>
-                        <a href="{% url 'car_detail' car.id %}" class="btn-primary-autodrive py-2 px-3 fs-6">
-                            Reserve <i class="fa-solid fa-chevron-right ms-1"></i>
-                        </a>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'car_detail' car.id %}" class="btn-outline-autodrive py-2 px-3 fs-6">
+                                Manage Specs <i class="fa-solid fa-arrow-right ms-1"></i>
+                            </a>
+                            <button type="button" class="btn btn-outline-danger rounded-pill px-3 py-2 fs-6" data-bs-toggle="modal" data-bs-target="#deleteCarModal{{ car.id }}" title="Delete {{ car.name }} from Fleet">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -143,132 +249,217 @@
 
 </div>
 
-<!-- Admin Add New Vehicle Modal (File Upload Enctype) -->
+<!-- Admin Add New Vehicle Modal (Color Matched & Equal Alignment) -->
 {% if user.is_staff or user.is_superuser %}
-<div class="modal fade" id="addCarModal" tabindex="-1" aria-labelledby="addCarModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content modal-receipt-card p-3">
-            <div class="modal-header border-0 pb-0">
+<div class="modal fade modal-autodrive" id="addCarModal" tabindex="-1" aria-labelledby="addCarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <form method="POST" action="{% url 'add_car' %}" enctype="multipart/form-data" class="modal-content shadow-lg" style="background-color: #0B1120 !important; background: #0B1120 !important; color: #FFFFFF !important; border: 1px solid rgba(56, 189, 248, 0.25) !important; border-radius: 20px !important;">
+            {% csrf_token %}
+            <div class="modal-header" style="background-color: #0B1120 !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important; flex-shrink: 0;">
                 <div class="d-flex align-items-center gap-2">
-                    <div class="brand-logo-box bg-warning text-dark" style="width: 36px; height: 36px; font-size: 1.1rem;">
+                    <div class="brand-logo-box bg-warning text-dark" style="width: 36px; height: 36px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
                         <i class="fa-solid fa-car-side"></i>
                     </div>
                     <div>
                         <h5 class="modal-title text-white fw-bold h6 mb-0" id="addCarModalLabel">Add New Vehicle to Fleet</h5>
-                        <div class="text-secondary" style="font-size: 0.7rem;">FLEET MANAGER CONSOLE</div>
+                        <div class="text-info small fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">FLEET INVENTORY SPECIFICATION CONSOLE</div>
                     </div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
-            <form method="POST" action="{% url 'add_car' %}" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label text-white small fw-bold">Vehicle Display Name *</label>
-                            <input type="text" name="name" class="form-control" placeholder="e.g. Porsche 911 GT3 RS" required>
+            <div class="modal-body" style="background-color: #0B1120 !important; overflow-y: auto; max-height: calc(85vh - 150px); padding: 1.5rem;">
+                <div class="row g-3">
+                    <!-- Row 1: Vehicle Name & Category -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-car text-info me-1"></i> Vehicle Display Name *</label>
+                            <input type="text" name="name" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. Porsche 911 GT3 RS" required>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label text-white small fw-bold">Make / Brand *</label>
-                            <input type="text" name="make" class="form-control" placeholder="e.g. Porsche" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label text-white small fw-bold">Model *</label>
-                            <input type="text" name="model" class="form-control" placeholder="e.g. GT3 RS" required>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label text-white small fw-bold">Category *</label>
-                            <select name="category" class="form-select" required>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-layer-group text-info me-1"></i> Fleet Category *</label>
+                            <select name="category" class="form-select fleet-form-select" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" required>
                                 {% for cat in categories %}
                                     <option value="{{ cat.id }}">{{ cat.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-white small fw-bold">Daily Rate (₹) *</label>
-                            <input type="number" step="100" name="daily_rate" class="form-control" placeholder="e.g. 7999" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-white small fw-bold">Model Year</label>
-                            <input type="number" name="year" class="form-control" value="2025" required>
-                        </div>
+                    </div>
 
-                        <div class="col-md-3">
-                            <label class="form-label text-white small fw-bold">Horsepower (HP)</label>
-                            <input type="number" name="horsepower" class="form-control" placeholder="e.g. 525" required>
+                    <!-- Row 2: Make/Brand & Model -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-industry text-info me-1"></i> Make / Brand *</label>
+                            <input type="text" name="make" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. Porsche" required>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label text-white small fw-bold">0-60 MPH Acceleration</label>
-                            <input type="text" name="zero_to_sixty" class="form-control" placeholder="e.g. 3.0s" required>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-tag text-info me-1"></i> Model Name *</label>
+                            <input type="text" name="model" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. GT3 RS" required>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label text-white small fw-bold">Top Speed</label>
-                            <input type="text" name="top_speed" class="form-control" placeholder="e.g. 197 mph" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label text-white small fw-bold">Seating Capacity</label>
-                            <input type="number" name="seats" class="form-control" value="2" required>
-                        </div>
+                    </div>
 
-                        <div class="col-md-4">
-                            <label class="form-label text-white small fw-bold">Transmission</label>
-                            <select name="transmission" class="form-select">
+                    <!-- Row 3: Model Year & Daily Rate -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-calendar text-info me-1"></i> Model Year *</label>
+                            <input type="number" name="year" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" value="2025" min="2015" max="2030" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-indian-rupee-sign text-info me-1"></i> Daily Rate (₹) *</label>
+                            <input type="number" step="100" name="daily_rate" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. 7999" required>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Horsepower & 0-60 Time -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-gauge-high text-info me-1"></i> Horsepower (HP) *</label>
+                            <input type="number" name="horsepower" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. 525" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-stopwatch text-info me-1"></i> 0-60 MPH Acceleration *</label>
+                            <input type="text" name="zero_to_sixty" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. 3.0s" required>
+                        </div>
+                    </div>
+
+                    <!-- Row 5: Top Speed & Seats -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-tachograph-digital text-info me-1"></i> Top Speed *</label>
+                            <input type="text" name="top_speed" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. 197 mph" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-users text-info me-1"></i> Seating Capacity *</label>
+                            <input type="number" name="seats" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" value="2" min="1" max="9" required>
+                        </div>
+                    </div>
+
+                    <!-- Row 6: Transmission & Powertrain -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-gears text-info me-1"></i> Transmission *</label>
+                            <select name="transmission" class="form-select fleet-form-select" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;">
                                 <option value="Automatic">Automatic</option>
                                 <option value="Manual">Manual</option>
                                 <option value="Direct-Drive">Direct-Drive Dual Motor</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-white small fw-bold">Powertrain / Fuel</label>
-                            <select name="fuel_type" class="form-select">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-charging-station text-info me-1"></i> Powertrain / Fuel *</label>
+                            <select name="fuel_type" class="form-select fleet-form-select" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;">
                                 <option value="Gasoline">Gasoline</option>
                                 <option value="Electric">Electric</option>
                                 <option value="Hybrid">Hybrid</option>
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label text-white small fw-bold">Luggage Capacity</label>
-                            <input type="text" name="luggage_capacity" class="form-control" placeholder="e.g. 2 Bags">
-                        </div>
+                    </div>
 
-                        <!-- Image File Upload Field -->
-                        <div class="col-md-12">
-                            <label class="form-label text-white small fw-bold"><i class="fa-solid fa-image text-info me-1"></i> Upload Vehicle Image *</label>
-                            <input type="file" name="image" class="form-control" accept="image/*" required>
+                    <!-- Row 7: Luggage & Tagline -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-suitcase text-info me-1"></i> Luggage Capacity</label>
+                            <input type="text" name="luggage_capacity" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. 2 Bags">
                         </div>
-
-                        <div class="col-md-12">
-                            <label class="form-label text-white small fw-bold">Tagline</label>
-                            <input type="text" name="tagline" class="form-control" placeholder="e.g. Supercharged Track Perfection">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-quote-left text-info me-1"></i> Vehicle Tagline</label>
+                            <input type="text" name="tagline" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. Supercharged Track Perfection">
                         </div>
+                    </div>
 
-                        <div class="col-md-12">
-                            <label class="form-label text-white small fw-bold">Included Features (Comma Separated)</label>
-                            <input type="text" name="features" class="form-control" placeholder="e.g. Aerodynamic Rear Wing, Ceramic Brakes, Track Mode">
+                    <!-- Row 8: Image File Upload & Features -->
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-image text-info me-1"></i> Vehicle Photo File *</label>
+                            <input type="file" name="image" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #94A3B8 !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" accept="image/*" required>
                         </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fleet-form-group">
+                            <label class="form-label text-light small fw-bold mb-1"><i class="fa-solid fa-star text-info me-1"></i> Included Features</label>
+                            <input type="text" name="features" class="form-control fleet-form-control" style="background-color: #131B2E !important; color: #FFFFFF !important; border: 1px solid rgba(255, 255, 255, 0.16) !important;" placeholder="e.g. Carbon Ceramic Brakes, Track Pack">
+                        </div>
+                    </div>
 
-                        <div class="col-md-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="is_featured" id="chk_featured" checked>
-                                <label class="form-check-label text-white small" for="chk_featured">
-                                    Feature on Home Page Carousel
-                                </label>
-                            </div>
+                    <!-- Row 9: Feature on Home Page -->
+                    <div class="col-md-12">
+                        <div class="form-check p-3 rounded-3 mt-1" style="background-color: #131B2E; border: 1px solid rgba(255, 255, 255, 0.12);">
+                            <input class="form-check-input" type="checkbox" name="is_featured" id="chk_featured" checked>
+                            <label class="form-check-label text-white small fw-semibold ms-2" for="chk_featured">
+                                <i class="fa-solid fa-award text-warning me-1"></i> Feature this vehicle prominently in Featured Showcase on Home Page
+                            </label>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-outline-secondary py-2 px-3 border-secondary text-white" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning py-2 px-4 fw-bold text-dark">
-                        <i class="fa-solid fa-plus me-1"></i> Add Vehicle to Fleet
-                    </button>
+            </div>
+            <div class="modal-footer" style="background-color: #0B1120 !important; border-top: 1px solid rgba(255, 255, 255, 0.1) !important; flex-shrink: 0; position: sticky; bottom: 0; z-index: 1055;">
+                <button type="button" class="btn btn-outline-secondary py-2 px-3 border-secondary text-white rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-warning py-2 px-4 fw-bold text-dark rounded-pill shadow-lg">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Save &amp; Add Vehicle
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modals for Admins -->
+{% for car in cars %}
+<div class="modal fade modal-autodrive" id="deleteCarModal{{ car.id }}" tabindex="-1" aria-labelledby="deleteCarModalLabel{{ car.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg" style="background-color: #0B1120 !important; background: #0B1120 !important; color: #FFFFFF !important; border: 1px solid rgba(239, 68, 68, 0.35) !important; border-radius: 20px !important;">
+            <div class="modal-header" style="background-color: #0B1120 !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="p-2 rounded-3 bg-danger text-white fs-5" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title text-white fw-bold h6 mb-0" id="deleteCarModalLabel{{ car.id }}">Delete Vehicle</h5>
+                        <div class="text-danger small fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">PERMANENT ACTION</div>
+                    </div>
                 </div>
-            </form>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4" style="background-color: #0B1120 !important;">
+                <p class="text-light mb-3">Are you sure you want to permanently delete this vehicle from the fleet inventory?</p>
+                <div class="p-3 rounded-3 mb-3 d-flex align-items-center gap-3" style="background-color: #131B2E; border: 1px solid rgba(255, 255, 255, 0.12);">
+                    <img src="{{ car.primary_image }}" alt="{{ car.name }}" class="rounded-3 object-fit-cover" style="width: 64px; height: 44px;">
+                    <div>
+                        <div class="text-white fw-bold">{{ car.name }}</div>
+                        <div class="text-secondary small">{{ car.make }} {{ car.model }} ({{ car.year }}) &bull; ₹{{ car.daily_rate|floatformat:0 }}/day</div>
+                    </div>
+                </div>
+                <div class="alert alert-danger py-2 px-3 small border-0 mb-0 rounded-3 d-flex align-items-center gap-2" style="background: rgba(239, 68, 68, 0.15); color: #FCA5A5;">
+                    <i class="fa-solid fa-triangle-exclamation text-danger fs-6"></i>
+                    <span>This vehicle will be permanently removed from all catalog displays and booking searches.</span>
+                </div>
+            </div>
+            <div class="modal-footer" style="background-color: #0B1120 !important; border-top: 1px solid rgba(255, 255, 255, 0.1) !important;">
+                <button type="button" class="btn btn-outline-secondary py-2 px-3 border-secondary text-white rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{% url 'delete_car' car.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="fleet">
+                    <button type="submit" class="btn btn-danger py-2 px-4 fw-bold rounded-pill">
+                        <i class="fa-solid fa-trash-can me-1"></i> Confirm Delete
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+{% endfor %}
 {% endif %}
 
 {% block extra_js %}
