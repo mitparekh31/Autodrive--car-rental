@@ -29,16 +29,29 @@
                         <h3 class="h5 text-white fw-bold mb-0">{{ b.car.name }}</h3>
                         <div class="text-secondary small">{{ b.car.category.name }} &bull; {{ b.car.year }}</div>
                     </div>
-                    <div>
+                    <div class="d-flex flex-column align-items-end gap-1">
                         {% if b.status == 'CONFIRMED' %}
                         <span class="badge bg-success p-2 px-3 text-white"><i class="fa-solid fa-circle-check me-1"></i>
                             Confirmed</span>
                         {% elif b.status == 'COMPLETED' %}
                         <span class="badge bg-info p-2 px-3 text-white"><i class="fa-solid fa-flag-checkered me-1"></i>
                             Completed</span>
+                        {% elif b.payment_status == 'FAILED' or b.status == 'PENDING' %}
+                        <span class="badge bg-warning p-2 px-3 text-dark fw-bold"><i class="fa-solid fa-clock me-1"></i>
+                            Payment Pending</span>
                         {% else %}
                         <span class="badge bg-danger p-2 px-3 text-white"><i class="fa-solid fa-ban me-1"></i>
                             Cancelled</span>
+                        {% endif %}
+
+                        {% if b.payment_status == 'PAID' %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.72rem;">
+                            <i class="fa-solid fa-lock me-1"></i> Paid ({{ b.get_payment_method_display|default:b.payment_method }})
+                        </span>
+                        {% elif b.payment_status == 'FAILED' %}
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.72rem;">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i> Payment Declined
+                        </span>
                         {% endif %}
                     </div>
                 </div>
@@ -61,40 +74,64 @@
                     </div>
                 </div>
 
-                <!-- Price Breakdown -->
+                <!-- Price Breakdown & Payment Info -->
                 <div class="p-3 rounded-3 bg-dark border border-secondary mb-3 mt-auto">
                     <div class="d-flex justify-content-between small text-secondary mb-1">
                         <span>Rental Duration:</span>
                         <span class="text-white fw-semibold">{{ b.num_days }} day{% if b.num_days > 1 %}s{% endif %}</span>
                     </div>
 
+                    {% if b.transaction_id %}
+                    <div class="d-flex justify-content-between small text-secondary mb-1">
+                        <span>Transaction ID:</span>
+                        <span class="text-info font-monospace">{{ b.transaction_id }}</span>
+                    </div>
+                    {% endif %}
+
                     <div
                         class="d-flex justify-content-between align-items-center pt-2 mt-2 border-top border-secondary">
-                        <span class="fw-bold text-white">Total Amount Paid:</span>
+                        <span class="fw-bold text-white">Total Amount:</span>
                         <span class="h4 text-info fw-bold mb-0">₹{{ b.total_price|floatformat:0 }}</span>
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center">
-                    <button class="btn btn-outline-info btn-sm rounded-3 btn-view-receipt text-info"
-                        data-bs-toggle="modal" data-bs-target="#receiptModal" data-ref="{{ b.booking_ref }}"
-                        data-car="{{ b.car.name }}" data-start="{{ b.start_date|date:'M d, Y' }}"
-                        data-end="{{ b.end_date|date:'M d, Y' }}" data-days="{{ b.num_days }}"
-                        data-hub="{{ b.pickup_location }}" data-return="{{ b.return_location }}"
-                        data-driver="{{ b.driver_name }}" data-email="{{ b.driver_email }}"
-                        data-subtotal="{{ b.subtotal|floatformat:0 }}" data-total="{{ b.total_price|floatformat:0 }}">
-                        <i class="fa-solid fa-receipt me-1"></i> Digital Pass / Receipt
-                    </button>
-
-                    {% if b.status == 'CONFIRMED' %}
-                    <form method="POST" action="{% url 'cancel_booking' b.id %}"
-                        onsubmit="return confirm('Are you sure you want to cancel this reservation?');">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-3 text-danger">
-                            <i class="fa-solid fa-xmark me-1"></i> Cancel Reservation
+                <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-info btn-sm rounded-3 btn-view-receipt text-info"
+                            data-bs-toggle="modal" data-bs-target="#receiptModal" data-ref="{{ b.booking_ref }}"
+                            data-car="{{ b.car.name }}" data-start="{{ b.start_date|date:'M d, Y' }}"
+                            data-end="{{ b.end_date|date:'M d, Y' }}" data-days="{{ b.num_days }}"
+                            data-hub="{{ b.pickup_location }}" data-return="{{ b.return_location }}"
+                            data-driver="{{ b.driver_name }}" data-email="{{ b.driver_email }}"
+                            data-subtotal="{{ b.subtotal|floatformat:0 }}" data-total="{{ b.total_price|floatformat:0 }}"
+                            data-txn="{{ b.transaction_id|default:'TXN-PAID' }}"
+                            data-method="{{ b.get_payment_method_display|default:b.payment_method }}"
+                            data-receipt-url="{% url 'payment_receipt' b.booking_ref %}">
+                            <i class="fa-solid fa-receipt me-1"></i> Digital Pass
                         </button>
-                    </form>
-                    {% endif %}
+
+                        <a href="{% url 'payment_receipt' b.booking_ref %}" class="btn btn-outline-secondary btn-sm rounded-3 text-light" title="View Full Tax Invoice">
+                            <i class="fa-solid fa-file-invoice me-1"></i> Invoice
+                        </a>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        {% if b.payment_status != 'PAID' and b.status != 'CANCELLED' %}
+                        <a href="{% url 'checkout_payment' b.booking_ref %}" class="btn btn-warning btn-sm rounded-3 fw-bold text-dark">
+                            <i class="fa-solid fa-credit-card me-1"></i> Pay Now 💳
+                        </a>
+                        {% endif %}
+
+                        {% if b.status == 'CONFIRMED' or b.status == 'PENDING' %}
+                        <form method="POST" action="{% url 'cancel_booking' b.id %}"
+                            onsubmit="return confirm('Are you sure you want to cancel this reservation?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-3 text-danger">
+                                <i class="fa-solid fa-xmark me-1"></i> Cancel
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -152,9 +189,17 @@
                         <span class="text-secondary small">Drop-off Location:</span>
                         <span class="text-white small" id="receipt_return">-</span>
                     </div>
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between mb-2">
                         <span class="text-secondary small">Registered Driver:</span>
                         <span class="text-white small" id="receipt_driver">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary small">Payment Transaction:</span>
+                        <span class="text-info font-monospace small" id="receipt_txn">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary small">Payment Method:</span>
+                        <span class="text-white small" id="receipt_method">-</span>
                     </div>
                 </div>
 
@@ -175,7 +220,10 @@
                     <div>Show this pass to dispatch concierge at pickup.</div>
                 </div>
             </div>
-            <div class="modal-footer border-0 pt-0">
+            <div class="modal-footer border-0 pt-0 d-flex flex-column gap-2">
+                <a href="#" id="modalInvoiceLink" class="btn btn-outline-info w-100 py-2">
+                    <i class="fa-solid fa-file-invoice me-1"></i> Print / Download Tax Invoice
+                </a>
                 <button type="button" class="btn btn-outline-secondary w-100 py-2 border-secondary text-white"
                     data-bs-dismiss="modal">Close Pass</button>
             </div>

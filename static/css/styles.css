@@ -834,3 +834,449 @@ input[type="file"].fleet-form-control::file-selector-button:hover {
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* ==========================================================================
+   AUTHENTIC PAYMENT GATEWAY DESIGN SYSTEM (Razorpay & Stripe Standard)
+   ========================================================================== */
+
+.gateway-sandbox-bar {
+  background: linear-gradient(90deg, #1E1B4B 0%, #0F172A 50%, #172554 100%);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+}
+
+.real-gateway-card {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(10, 15, 29, 0.98) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 35px rgba(56, 189, 248, 0.08);
+  backdrop-filter: blur(20px);
+}
+
+.gateway-merchant-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34D399;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.gateway-nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.6);
+  color: #94A3B8;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+
+.gateway-nav-tab:hover {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #FFFFFF;
+  transform: translateX(3px);
+}
+
+.gateway-nav-tab.active {
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.18) 0%, rgba(59, 130, 246, 0.12) 100%);
+  border-color: #38BDF8;
+  color: #FFFFFF;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+}
+
+.gateway-nav-tab .tab-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.gateway-nav-tab.active .tab-icon-wrap {
+  background: rgba(56, 189, 248, 0.25);
+  color: #38BDF8;
+}
+
+/* Authentic Bank Tile Cards */
+.bank-brand-card {
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  background: #0E1626;
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.bank-brand-card:hover {
+  border-color: #38BDF8;
+  background: rgba(56, 189, 248, 0.1);
+  transform: translateY(-2px);
+}
+
+.bank-brand-card.active {
+  border-color: #38BDF8;
+  background: rgba(56, 189, 248, 0.18);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+}
+
+.bank-brand-card .bank-stripe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+/* UPI QR Code Scanner Laser Animation */
+@keyframes laserSweep {
+  0% { top: 6px; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { top: calc(100% - 8px); opacity: 0; }
+}
+
+.qr-scanner-box {
+  position: relative;
+  display: inline-block;
+  background: #FFFFFF;
+  padding: 1rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.3);
+  overflow: hidden;
+}
+
+.qr-laser-line {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #0284C7, #38BDF8, #0284C7, transparent);
+  box-shadow: 0 0 10px #38BDF8, 0 0 18px #0284C7;
+  animation: laserSweep 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+/* 3D-Secure Bank OTP Modal Design */
+.acs-bank-header {
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  border-bottom: 2px solid #38BDF8;
+  padding: 1.25rem 1.5rem;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.otp-box-group {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.otp-digit-input {
+  width: 48px;
+  height: 56px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-family: monospace;
+  background: #090E1A;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: #38BDF8;
+  transition: all 0.2s ease;
+}
+
+.otp-digit-input:focus {
+  outline: none;
+  border-color: #38BDF8;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+  background: #0D1527;
+}
+
+.btn-gateway-pay {
+  background: linear-gradient(135deg, #0284C7 0%, #2563EB 100%);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  padding: 0.95rem 1.5rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 25px rgba(2, 132, 199, 0.35);
+  transition: all 0.25s ease;
+  width: 100%;
+}
+
+.btn-gateway-pay:hover {
+  background: linear-gradient(135deg, #0369A1 0%, #1D4ED8 100%);
+  box-shadow: 0 15px 35px rgba(2, 132, 199, 0.5);
+  transform: translateY(-1px);
+  color: #FFFFFF;
+}
+
+.upi-app-badge {
+  background: #0B1120;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #E2E8F0;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   OFFICIAL RAZORPAY STANDARD CHECKOUT & BANK SIMULATOR (AUTHENTIC UI / UX)
+   ========================================================================== */
+
+.rzp-modal-content {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+  background: #FFFFFF !important;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+.rzp-header {
+  background: #0C2340 !important;
+  padding: 1.15rem 1.6rem !important;
+  color: #FFFFFF !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.rzp-brand-avatar {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 10px !important;
+  background: #14325C !important;
+  border: 1.5px solid #3395FF !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.25rem !important;
+  color: #3395FF !important;
+  flex-shrink: 0 !important;
+}
+
+.rzp-trusted-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  color: #10B981 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+.rzp-test-tag {
+  background: rgba(245, 158, 11, 0.2) !important;
+  border: 1px solid #F59E0B !important;
+  color: #FBBF24 !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  padding: 2px 8px !important;
+  border-radius: 4px !important;
+  letter-spacing: 0.05em !important;
+}
+
+.rzp-body-split {
+  display: flex !important;
+  flex-direction: row !important;
+  min-height: 440px !important;
+  background: #FFFFFF !important;
+}
+
+.rzp-sidebar {
+  width: 230px !important;
+  background: #F8FAFC !important;
+  border-right: 1px solid #E2E8F0 !important;
+  padding: 1rem 0 !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+.rzp-nav-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.85rem !important;
+  padding: 0.9rem 1.25rem !important;
+  color: #475569 !important;
+  font-size: 0.92rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border-left: 3px solid transparent !important;
+  background: transparent !important;
+}
+
+.rzp-nav-item:hover {
+  background: #EFF6FF !important;
+  color: #1E40AF !important;
+}
+
+.rzp-nav-item.active {
+  background: #FFFFFF !important;
+  border-left: 3px solid #3395FF !important;
+  color: #0C2340 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+.rzp-nav-item i {
+  width: 22px !important;
+  text-align: center !important;
+  font-size: 1.05rem !important;
+}
+
+.rzp-content-pane {
+  flex-grow: 1 !important;
+  padding: 1.5rem 1.75rem !important;
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+.rzp-input-label {
+  color: #334155 !important;
+  font-weight: 600 !important;
+  font-size: 0.84rem !important;
+  margin-bottom: 0.35rem !important;
+  display: block !important;
+}
+
+.rzp-input {
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+  border: 1.5px solid #CBD5E1 !important;
+  border-radius: 8px !important;
+  padding: 0.65rem 0.9rem !important;
+  font-size: 0.92rem !important;
+  width: 100% !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.rzp-input:focus {
+  border-color: #3395FF !important;
+  box-shadow: 0 0 0 3px rgba(51, 149, 255, 0.2) !important;
+  outline: none !important;
+}
+
+.btn-rzp-pay {
+  background: #3395FF !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.95rem 1.5rem !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.65rem !important;
+  box-shadow: 0 4px 14px rgba(51, 149, 255, 0.35) !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+
+.btn-rzp-pay:hover {
+  background: #2382EC !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6px 20px rgba(51, 149, 255, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+
+.rzp-footer-tag {
+  text-align: center !important;
+  font-size: 0.74rem !important;
+  color: #64748B !important;
+  padding: 0.75rem 0 0.15rem 0 !important;
+}
+
+.rzp-footer-tag span {
+  font-weight: 800 !important;
+  color: #3395FF !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* Razorpay Bank Simulator Styles */
+.rzp-sim-card {
+  border: 2px solid #E2E8F0 !important;
+  border-radius: 12px !important;
+  background: #F8FAFC !important;
+  padding: 1rem 1.25rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.rzp-sim-card:hover {
+  border-color: #3395FF !important;
+  background: #EFF6FF !important;
+}
+
+.rzp-sim-card.active-success {
+  border-color: #10B981 !important;
+  background: #ECFDF5 !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15) !important;
+}
+
+.rzp-sim-card.active-failure {
+  border-color: #EF4444 !important;
+  background: #FEF2F2 !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15) !important;
+}
+
+.rzp-bank-tile {
+  border: 1.5px solid #E2E8F0 !important;
+  border-radius: 8px !important;
+  padding: 0.65rem 0.75rem !important;
+  background: #FFFFFF !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  color: #1E293B !important;
+  transition: all 0.2s ease !important;
+}
+
+.rzp-bank-tile:hover {
+  border-color: #3395FF !important;
+  background: #EFF6FF !important;
+}
+
+.rzp-bank-tile.active {
+  border-color: #3395FF !important;
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  font-weight: 700 !important;
+}

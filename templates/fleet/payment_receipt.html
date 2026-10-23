@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tax Invoice & Payment Receipt #{{ booking.booking_ref }} | AutoDrive{% endblock %}
+
+{% block content %}
+<style>
+@media print {
+    body {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+    }
+    .no-print, header, footer, .navbar-custom {
+        display: none !important;
+    }
+    .invoice-card {
+        border: 1px solid #CCC !important;
+        box-shadow: none !important;
+        background: #FFF !important;
+        color: #000 !important;
+    }
+    .text-white {
+        color: #000000 !important;
+    }
+    .text-secondary {
+        color: #555555 !important;
+    }
+    .bg-dark {
+        background: #F8F9FA !important;
+        color: #000000 !important;
+    }
+    .badge {
+        border: 1px solid #000 !important;
+        color: #000 !important;
+    }
+}
+
+.invoice-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(11, 17, 32, 0.98) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 24px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(56, 189, 248, 0.15);
+}
+
+.receipt-stamp-paid {
+    display: inline-block;
+    padding: 0.4rem 1.25rem;
+    border: 2px solid #10B981;
+    border-radius: 12px;
+    color: #10B981;
+    font-weight: 800;
+    letter-spacing: 2px;
+    font-size: 0.85rem;
+    transform: rotate(-3deg);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+</style>
+
+<div class="container py-4">
+
+    <!-- Top Action Bar (hidden when printed) -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <a href="{% url 'my_bookings' %}" class="btn btn-outline-light rounded-pill px-3 py-2">
+            <i class="fa-solid fa-arrow-left me-1"></i> Back to My Reservations
+        </a>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-primary-autodrive rounded-pill px-4 py-2">
+                <i class="fa-solid fa-print me-1"></i> Print / Save PDF Invoice
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Official Invoice Document -->
+    <div class="p-5 invoice-card mx-auto" style="max-width: 860px;">
+
+        <!-- Invoice Header -->
+        <div class="d-flex flex-wrap justify-content-between align-items-start pb-4 mb-4 border-bottom border-secondary gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="brand-logo-box" style="width: 42px; height: 42px; font-size: 1.25rem;">
+                        <i class="fa-solid fa-car-side"></i>
+                    </div>
+                    <div>
+                        <div class="h4 text-white fw-bold mb-0">AutoDrive</div>
+                        <div class="text-secondary small" style="font-size: 0.72rem; letter-spacing: 1px;">LUXURY AUTOMOTIVE SAAS & FLEET</div>
+                    </div>
+                </div>
+                <div class="text-secondary small">
+                    <div>Central Fleet Operations & Concierge Hub</div>
+                    <div>GSTIN: 27AABCA1234F1Z8 &bull; CIN: U50100MH2025PTC123456</div>
+                    <div>Concierge Dispatch: dispatch@autodrive.io &bull; +91 98765 43210</div>
+                </div>
+            </div>
+
+            <div class="text-md-end">
+                <div class="receipt-stamp-paid mb-3">PAID & VERIFIED</div>
+                <div class="h5 text-info fw-bold mb-1">TAX INVOICE / RECEIPT</div>
+                <div class="text-secondary small">Invoice Ref: <strong>#INV-{{ booking.booking_ref }}</strong></div>
+                <div class="text-secondary small">Booking Ref: <strong>#{{ booking.booking_ref }}</strong></div>
+                <div class="text-secondary small">Issued: <strong>{{ booking.paid_at|default:booking.created_at|date:"M d, Y - h:i A" }}</strong></div>
+            </div>
+        </div>
+
+        <!-- Billed To & Payment Metadata -->
+        <div class="row g-4 mb-4 pb-4 border-bottom border-secondary">
+            <div class="col-md-6">
+                <div class="text-secondary text-uppercase small fw-bold mb-1">Billed To (Customer Details):</div>
+                <div class="text-white fw-bold h6 mb-1">{{ booking.driver_name }}</div>
+                <div class="text-secondary small mb-1"><i class="fa-solid fa-envelope me-1"></i> {{ booking.driver_email }}</div>
+                <div class="text-secondary small mb-1"><i class="fa-solid fa-phone me-1"></i> {{ booking.driver_phone }}</div>
+                {% if booking.customer_license %}
+                <div class="text-secondary small"><i class="fa-solid fa-id-card me-1"></i> License: {{ booking.customer_license }}</div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-6 text-md-end">
+                <div class="text-secondary text-uppercase small fw-bold mb-1">Payment Verification Details:</div>
+                <div class="text-info fw-bold font-monospace h6 mb-1">
+                    <i class="fa-solid fa-receipt me-1"></i> TXN ID: {{ booking.transaction_id|default:"TXN-AUTO-APPROVED" }}
+                </div>
+                <div class="text-white small mb-1">
+                    Payment Mode: 
+                    {% if booking.payment_method == 'card' %}
+                    <span class="badge bg-primary text-white"><i class="fa-regular fa-credit-card me-1"></i> Credit / Debit Card (Ending 4242)</span>
+                    {% elif booking.payment_method == 'upi' %}
+                    <span class="badge bg-warning text-dark"><i class="fa-solid fa-qrcode me-1"></i> Instant UPI / QR</span>
+                    {% elif booking.payment_method == 'netbanking' %}
+                    <span class="badge bg-success text-white"><i class="fa-solid fa-building-columns me-1"></i> Net Banking</span>
+                    {% else %}
+                    <span class="badge bg-info text-dark"><i class="fa-solid fa-wallet me-1"></i> Concierge Wallet</span>
+                    {% endif %}
+                </div>
+                <div class="text-success small fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> Gateway Status: HTTP 200 OK (Approved)</div>
+                <div class="text-secondary small">Authorization: Simulated 3D Secure 2.0 Auth</div>
+            </div>
+        </div>
+
+        <!-- Vehicle & Rental Summary Table -->
+        <div class="table-responsive mb-4">
+            <table class="table table-dark table-bordered border-secondary align-middle mb-0">
+                <thead class="bg-dark">
+                    <tr class="text-secondary small text-uppercase">
+                        <th>Description / Line Item</th>
+                        <th class="text-center">Rate / Day</th>
+                        <th class="text-center">Duration</th>
+                        <th class="text-end">Line Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="text-white fw-bold">{{ car.name }} ({{ car.year }})</div>
+                            <div class="text-secondary small">{{ car.category.name }} &bull; {{ car.transmission }} &bull; {{ car.fuel_type }}</div>
+                            <div class="text-info small mt-1">
+                                <i class="fa-regular fa-calendar me-1"></i> {{ booking.start_date|date:"M d, Y" }} &rarr; {{ booking.end_date|date:"M d, Y" }} (Pick-up Time: {{ booking.pickup_time }})
+                            </div>
+                        </td>
+                        <td class="text-center text-white">₹{{ booking.daily_rate_at_booking|floatformat:0 }}</td>
+                        <td class="text-center text-white">{{ booking.num_days }} day{% if booking.num_days > 1 %}s{% endif %}</td>
+                        <td class="text-end text-white fw-bold">₹{{ booking.subtotal|floatformat:0 }}</td>
+                    </tr>
+                    {% if booking.chauffeur_fee > 0 %}
+                    <tr>
+                        <td>
+                            <div class="text-white fw-bold">Certified Professional Chauffeur Service</div>
+                            <div class="text-secondary small">Driver: {{ booking.assigned_driver.name|default:"VIP Chauffeur Assigned" }}</div>
+                        </td>
+                        <td class="text-center text-white">₹{{ booking.assigned_driver.daily_fee|default:800|floatformat:0 }}</td>
+                        <td class="text-center text-white">{{ booking.num_days }} day{% if booking.num_days > 1 %}s{% endif %}</td>
+                        <td class="text-end text-warning fw-bold">+₹{{ booking.chauffeur_fee|floatformat:0 }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td>
+                            <div class="text-white">VIP Concierge Comprehensive Insurance Protection</div>
+                            <div class="text-secondary small">Zero-Deductible Damage Waiver included</div>
+                        </td>
+                        <td class="text-center text-white">₹0</td>
+                        <td class="text-center text-white">{{ booking.num_days }} days</td>
+                        <td class="text-end text-success">Complimentary</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="text-white">Central Hub GPS Navigation & AI Dispatch</div>
+                            <div class="text-secondary small">Pick-up: {{ booking.pickup_location }} &bull; Drop-off: {{ booking.return_location }}</div>
+                        </td>
+                        <td class="text-center text-white">₹0</td>
+                        <td class="text-center text-white">-</td>
+                        <td class="text-end text-success">Complimentary</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="border-top border-secondary">
+                        <td colspan="3" class="text-end text-secondary fw-semibold">Subtotal:</td>
+                        <td class="text-end text-white fw-bold">₹{{ booking.total_price|floatformat:0 }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="text-end text-secondary fw-semibold">Integrated GST (0% Test Sandbox):</td>
+                        <td class="text-end text-success fw-bold">₹0</td>
+                    </tr>
+                    <tr class="bg-dark">
+                        <td colspan="3" class="text-end text-white fw-bold fs-5">Total Paid & Discharged:</td>
+                        <td class="text-end text-info fw-bold h4 mb-0">₹{{ booking.total_price|floatformat:0 }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Bottom QR Pass & Dispatch Signature -->
+        <div class="p-3 rounded-3 bg-dark border border-secondary d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <i class="fa-solid fa-qrcode fs-1 text-info"></i>
+                <div>
+                    <div class="text-white fw-bold small">Official Digital Boarding Pass</div>
+                    <div class="text-secondary small" style="font-size: 0.72rem;">Show this cryptographically signed voucher to the concierge manager at vehicle handover.</div>
+                </div>
+            </div>
+            <div class="text-end text-secondary small" style="font-size: 0.72rem;">
+                <div>Authorized System Signature:</div>
+                <div class="font-monospace text-info mt-1">SHA256:{{ booking.booking_ref }}e9a4f7</div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

@@ -5,10 +5,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Q, Sum
+from django.utils import timezone
 from datetime import datetime, date, timedelta
 from decimal import Decimal
-from .models import Car, Category, Booking, Review, Driver
+import uuid
+from .models import Car, Category, Booking, Review, Driver, Payment
 
 def home_view(request):
     categories = Category.objects.all()
@@ -83,6 +86,15 @@ def car_detail_view(request, car_id):
     today_date = date.today()
     tomorrow_date = today_date + timedelta(days=1)
 
+    # Check vehicle availability for default dates (today to tomorrow)
+    car_conflict = car.get_overlapping_booking(today_date, tomorrow_date)
+    is_car_available_for_dates = (car_conflict is None)
+    car_conflict_info = (
+        f"Booked ({car_conflict.start_date.strftime('%b %d')} - {car_conflict.end_date.strftime('%b %d')})"
+        if car_conflict else None
+    )
+    upcoming_car_bookings = car.get_upcoming_bookings()
+
     # Pre-calculate availability for default dates (today to tomorrow)
     drivers_with_status = []
     available_drivers_count = 0
@@ -110,6 +122,9 @@ def car_detail_view(request, car_id):
         'available_drivers_count': available_drivers_count,
         'today': today,
         'tomorrow': tomorrow,
+        'is_car_available_for_dates': is_car_available_for_dates,
+        'car_conflict_info': car_conflict_info,
+        'upcoming_car_bookings': upcoming_car_bookings,
     }
     return render(request, 'fleet/car_detail.html', context)
 
@@ -174,62 +189,137 @@ def book_car_view(request, car_id):
             messages.error(request, "Return date must be at least 1 day after pick-up date.")
             return redirect('car_detail', car_id=car.id)
 
-        num_days = (end_date - start_date).days
-        subtotal = car.daily_rate * num_days
+        try:
+            with transaction.atomic():
+                # Lock car row for concurrency safety during booking
+                car_locked = Car.objects.select_for_update().get(id=car.id)
 
-        if drive_mode == 'chauffeur':
-            if not driver_id:
-                messages.error(request, "Please select a certified chauffeur to proceed with driver service.")
-                return redirect('car_detail', car_id=car.id)
-            try:
-                assigned_driver = Driver.objects.get(id=driver_id, is_available=True)
-            except (Driver.DoesNotExist, ValueError):
-                messages.error(request, "Selected certified driver is invalid or currently inactive.")
-                return redirect('car_detail', car_id=car.id)
+                # Strict car slot overlap check: Ensure car is not already booked during this time slot
+                conflicting_car = car_locked.get_overlapping_booking(start_date, end_date)
+                if conflicting_car:
+                    messages.error(
+                        request,
+                        f"🚫 Time Slot Unavailable: {car_locked.name} is already booked from "
+                        f"{conflicting_car.start_date.strftime('%b %d, %Y')} to "
+                        f"{conflicting_car.end_date.strftime('%b %d, %Y')} "
+                        f"(Booking #{conflicting_car.booking_ref}). "
+                        f"Please choose a different time slot or select another luxury vehicle."
+                    )
+                    return redirect('car_detail', car_id=car.id)
 
-            # Strict overlap check: Ensure driver is not already booked during this time window
-            conflicting = assigned_driver.get_overlapping_booking(start_date, end_date)
-            if conflicting:
-                messages.error(
-                    request,
-                    f"Chauffeur {assigned_driver.name} is already reserved from {conflicting.start_date.strftime('%b %d, %Y')} "
-                    f"to {conflicting.end_date.strftime('%b %d, %Y')}. Please choose another certified driver or select different dates."
+                num_days = (end_date - start_date).days
+                subtotal = car_locked.daily_rate * num_days
+
+                if drive_mode == 'chauffeur':
+                    if not driver_id:
+                        messages.error(request, "Please select a certified chauffeur to proceed with driver service.")
+                        return redirect('car_detail', car_id=car.id)
+                    try:
+                        assigned_driver = Driver.objects.select_for_update().get(id=driver_id, is_available=True)
+                    except (Driver.DoesNotExist, ValueError):
+                        messages.error(request, "Selected certified driver is invalid or currently inactive.")
+                        return redirect('car_detail', car_id=car.id)
+
+                    # Strict overlap check: Ensure driver is not already booked during this time window
+                    conflicting = assigned_driver.get_overlapping_booking(start_date, end_date)
+                    if conflicting:
+                        messages.error(
+                            request,
+                            f"Chauffeur {assigned_driver.name} is already reserved from {conflicting.start_date.strftime('%b %d, %Y')} "
+                            f"to {conflicting.end_date.strftime('%b %d, %Y')}. Please choose another certified driver or select different dates."
+                        )
+                        return redirect('car_detail', car_id=car.id)
+
+                    chauffeur_fee = assigned_driver.daily_fee * num_days
+
+                grand_total = subtotal + chauffeur_fee
+
+                # Payment Details from Dummy Gateway Form
+                payment_method = request.POST.get('payment_method', 'card')
+                card_number = request.POST.get('card_number', '').replace(' ', '').strip()
+                upi_id = request.POST.get('upi_id', '').strip()
+                bank_name = request.POST.get('bank_name', '').strip()
+                simulate_action = request.POST.get('simulate_payment_action', 'success')
+
+                is_failed = (simulate_action == 'fail' or card_number.endswith('0000'))
+                booking_status = 'PENDING' if is_failed else 'CONFIRMED'
+                payment_status = 'FAILED' if is_failed else 'PAID'
+                txn_id = f"TXN-FAIL-{uuid.uuid4().hex[:8].upper()}" if is_failed else f"TXN-{uuid.uuid4().hex[:10].upper()}"
+                paid_at = None if is_failed else timezone.now()
+
+                card_brand = 'Visa'
+                if card_number.startswith('5'):
+                    card_brand = 'Mastercard'
+                elif card_number.startswith('3'):
+                    card_brand = 'American Express'
+                elif card_number.startswith('6'):
+                    card_brand = 'RuPay'
+                last4 = card_number[-4:] if len(card_number) >= 4 else '4242'
+
+                booking = Booking.objects.create(
+                    user=request.user,
+                    car=car_locked,
+                    start_date=start_date,
+                    end_date=end_date,
+                    pickup_time=pickup_time,
+                    pickup_location=pickup_location,
+                    return_location=return_location,
+                    drive_mode=drive_mode,
+                    assigned_driver=assigned_driver,
+                    customer_license=customer_license,
+                    chauffeur_fee=chauffeur_fee,
+                    driver_name=driver_name,
+                    driver_email=driver_email,
+                    driver_phone=driver_phone,
+                    daily_rate_at_booking=car_locked.daily_rate,
+                    num_days=num_days,
+                    subtotal=subtotal,
+                    discount_percent=0,
+                    discount_amount=0,
+                    insurance_opt=False,
+                    chauffeur_opt=(drive_mode == 'chauffeur'),
+                    gps_opt=False,
+                    total_price=grand_total,
+                    status=booking_status,
+                    payment_status=payment_status,
+                    payment_method=payment_method,
+                    transaction_id=txn_id,
+                    paid_at=paid_at
                 )
-                return redirect('car_detail', car_id=car.id)
 
-            chauffeur_fee = assigned_driver.daily_fee * num_days
+                Payment.objects.update_or_create(
+                    booking=booking,
+                    defaults={
+                        'transaction_id': txn_id,
+                        'payment_method': payment_method,
+                        'amount': grand_total,
+                        'status': 'SUCCESS' if not is_failed else 'FAILED',
+                        'card_last_four': last4,
+                        'card_brand': card_brand,
+                        'upi_id': upi_id if payment_method == 'upi' else '',
+                        'bank_name': bank_name if payment_method == 'netbanking' else '',
+                        'gateway_response': 'Simulated Payment Gateway Approval (HTTP 200 - OK)' if not is_failed else 'Simulated Issuer Decline (Card ending in 0000 - Insufficient Test Funds)'
+                    }
+                )
+        except Exception as e:
+            messages.error(request, f"Unable to complete reservation: {str(e)}")
+            return redirect('car_detail', car_id=car.id)
 
+        if is_failed:
+            messages.warning(
+                request,
+                f"⚠️ Payment Declined: Bank Issuer declined transaction #{txn_id}. "
+                f"Your vehicle slot has been provisionally reserved (#{booking.booking_ref}). "
+                f"Please complete payment to confirm your booking."
+            )
+            return redirect('checkout_payment', booking_ref=booking.booking_ref)
 
-        grand_total = subtotal + chauffeur_fee
-
-        booking = Booking.objects.create(
-            user=request.user,
-            car=car,
-            start_date=start_date,
-            end_date=end_date,
-            pickup_time=pickup_time,
-            pickup_location=pickup_location,
-            return_location=return_location,
-            drive_mode=drive_mode,
-            assigned_driver=assigned_driver,
-            customer_license=customer_license,
-            chauffeur_fee=chauffeur_fee,
-            driver_name=driver_name,
-            driver_email=driver_email,
-            driver_phone=driver_phone,
-            daily_rate_at_booking=car.daily_rate,
-            num_days=num_days,
-            subtotal=subtotal,
-            discount_percent=0,
-            discount_amount=0,
-            insurance_opt=False,
-            chauffeur_opt=(drive_mode == 'chauffeur'),
-            gps_opt=False,
-            total_price=grand_total,
-            status='CONFIRMED'
+        method_names = dict(Booking.PAYMENT_METHOD_CHOICES)
+        method_label = method_names.get(payment_method, 'Payment')
+        messages.success(
+            request,
+            f"🎉 Reservation Confirmed! Payment of ₹{grand_total:,.0f} Successful via {method_label}! (Txn ID: #{txn_id}). Your Booking #{booking.booking_ref} is confirmed."
         )
-
-        messages.success(request, f"🎉 Reservation Confirmed! Your Booking Ref is #{booking.booking_ref}")
         return redirect('my_bookings')
 
     return redirect('car_detail', car_id=car.id)
@@ -473,6 +563,180 @@ def driver_availability_api(request):
         'total_count': len(drivers_data),
         'drivers': drivers_data,
     })
+
+
+def car_availability_api(request):
+    """
+    API endpoint returning real-time slot availability for a specified car and date range.
+    """
+    car_id = request.GET.get('car_id')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if not car_id or not start_date_str or not end_date_str:
+        return JsonResponse({'error': 'car_id, start_date and end_date are required'}, status=400)
+
+    try:
+        car = Car.objects.get(id=car_id)
+    except (Car.DoesNotExist, ValueError):
+        return JsonResponse({'error': 'Car not found'}, status=404)
+
+    try:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'Invalid date format (must be YYYY-MM-DD)'}, status=400)
+
+    if end_date <= start_date:
+        return JsonResponse({'error': 'end_date must be after start_date'}, status=400)
+
+    conflict = car.get_overlapping_booking(start_date, end_date)
+    is_free = (conflict is None)
+    conflict_msg = (
+        f"Booked from {conflict.start_date.strftime('%b %d, %Y')} to {conflict.end_date.strftime('%b %d, %Y')} (#{conflict.booking_ref})"
+        if conflict else None
+    )
+
+    upcoming = car.get_upcoming_bookings()
+    booked_slots = [
+        {
+            'start': b.start_date.strftime('%Y-%m-%d'),
+            'end': b.end_date.strftime('%Y-%m-%d'),
+            'start_display': b.start_date.strftime('%b %d, %Y'),
+            'end_display': b.end_date.strftime('%b %d, %Y'),
+            'ref': b.booking_ref
+        }
+        for b in upcoming
+    ]
+
+    return JsonResponse({
+        'status': 'success',
+        'car_id': car.id,
+        'car_name': car.name,
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        'is_available': is_free,
+        'conflict_info': conflict_msg,
+        'booked_slots': booked_slots,
+    })
+
+
+@login_required
+def checkout_payment_view(request, booking_ref):
+    """
+    Dedicated luxury payment gateway screen for verifying and paying a reservation.
+    """
+    booking = get_object_or_404(Booking, booking_ref=booking_ref, user=request.user)
+    payment = getattr(booking, 'payment_record', None)
+
+    context = {
+        'booking': booking,
+        'car': booking.car,
+        'payment': payment,
+    }
+    return render(request, 'fleet/checkout_payment.html', context)
+
+
+@login_required
+def process_payment_view(request, booking_ref):
+    """
+    Process dummy payment from dedicated checkout portal with card/UPI/bank simulation.
+    """
+    booking = get_object_or_404(Booking, booking_ref=booking_ref, user=request.user)
+
+    if request.method == 'POST':
+        payment_method = request.POST.get('payment_method', 'card')
+        card_number = request.POST.get('card_number', '').replace(' ', '').strip()
+        card_name = request.POST.get('card_name', '').strip() or booking.driver_name
+        upi_id = request.POST.get('upi_id', '').strip()
+        bank_name = request.POST.get('bank_name', '').strip()
+        simulate_action = request.POST.get('simulate_payment_action', 'success')
+
+        is_failed = (simulate_action == 'fail' or card_number.endswith('0000'))
+
+        if is_failed:
+            txn_id = f"TXN-FAIL-{uuid.uuid4().hex[:8].upper()}"
+            booking.payment_status = 'FAILED'
+            booking.transaction_id = txn_id
+            booking.save()
+
+            Payment.objects.update_or_create(
+                booking=booking,
+                defaults={
+                    'transaction_id': txn_id,
+                    'payment_method': payment_method,
+                    'amount': booking.total_price,
+                    'status': 'FAILED',
+                    'card_last_four': card_number[-4:] if len(card_number) >= 4 else '0000',
+                    'card_brand': 'Test Card',
+                    'upi_id': upi_id,
+                    'bank_name': bank_name,
+                    'gateway_response': 'Simulated Issuer Decline (Card ending in 0000 - Insufficient Test Funds)'
+                }
+            )
+            messages.error(
+                request,
+                f"❌ Payment Declined: Simulated issuer declined transaction #{txn_id}. Please try a valid test card or UPI."
+            )
+            return redirect('checkout_payment', booking_ref=booking.booking_ref)
+
+        # Successful payment approval
+        txn_id = f"TXN-{uuid.uuid4().hex[:10].upper()}"
+        card_brand = 'Visa'
+        if card_number.startswith('5'):
+            card_brand = 'Mastercard'
+        elif card_number.startswith('3'):
+            card_brand = 'American Express'
+        elif card_number.startswith('6'):
+            card_brand = 'RuPay'
+        last4 = card_number[-4:] if len(card_number) >= 4 else '4242'
+
+        booking.status = 'CONFIRMED'
+        booking.payment_status = 'PAID'
+        booking.payment_method = payment_method
+        booking.transaction_id = txn_id
+        booking.paid_at = timezone.now()
+        booking.save()
+
+        Payment.objects.update_or_create(
+            booking=booking,
+            defaults={
+                'transaction_id': txn_id,
+                'payment_method': payment_method,
+                'amount': booking.total_price,
+                'status': 'SUCCESS',
+                'card_last_four': last4,
+                'card_brand': card_brand,
+                'upi_id': upi_id,
+                'bank_name': bank_name,
+                'gateway_response': 'Simulated Payment Gateway Approval (HTTP 200 - OK)'
+            }
+        )
+
+        method_names = dict(Booking.PAYMENT_METHOD_CHOICES)
+        method_label = method_names.get(payment_method, 'Payment')
+        messages.success(
+            request,
+            f"🎉 Reservation Confirmed! Payment of ₹{booking.total_price:,.0f} Successful via {method_label}! (Txn #{txn_id}). Your reservation is confirmed."
+        )
+        return redirect('my_bookings')
+
+    return redirect('checkout_payment', booking_ref=booking.booking_ref)
+
+
+@login_required
+def payment_receipt_view(request, booking_ref):
+    """
+    Printable / Downloadable Digital Tax Invoice & Payment Receipt.
+    """
+    booking = get_object_or_404(Booking, booking_ref=booking_ref, user=request.user)
+    payment = getattr(booking, 'payment_record', None)
+    context = {
+        'booking': booking,
+        'payment': payment,
+        'car': booking.car,
+    }
+    return render(request, 'fleet/payment_receipt.html', context)
 
 
 

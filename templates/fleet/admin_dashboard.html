@@ -317,11 +317,19 @@
                             <div class="text-secondary small">per day</div>
                         </td>
                         <td>
-                            {% if c.is_available %}
-                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Available</span>
-                            {% else %}
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Reserved</span>
-                            {% endif %}
+                            {% with active_trip=c.get_active_assignment_today next_trip=c.get_next_upcoming_booking %}
+                                {% if active_trip %}
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">On Trip</span>
+                                    <div class="text-warning" style="font-size: 0.72rem;">Until {{ active_trip.end_date|date:"M d" }} (#{{ active_trip.booking_ref }})</div>
+                                {% elif next_trip %}
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">Reserved</span>
+                                    <div class="text-secondary" style="font-size: 0.72rem;">From {{ next_trip.start_date|date:"M d" }} (#{{ next_trip.booking_ref }})</div>
+                                {% elif c.is_available %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Available</span>
+                                {% else %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Inactive</span>
+                                {% endif %}
+                            {% endwith %}
                         </td>
                         <td class="text-end">
                             <a href="{% url 'car_detail' c.id %}" class="btn btn-sm btn-outline-info rounded-pill px-2 py-1" title="View Public Page">
@@ -381,8 +389,15 @@
                                 <span class="badge bg-success">Confirmed</span>
                             {% elif b.status == 'COMPLETED' %}
                                 <span class="badge bg-info">Completed</span>
+                            {% elif b.payment_status == 'FAILED' or b.status == 'PENDING' %}
+                                <span class="badge bg-warning text-dark">Pending Pay</span>
                             {% else %}
                                 <span class="badge bg-danger">Cancelled</span>
+                            {% endif %}
+                            {% if b.payment_status == 'PAID' %}
+                                <div class="text-success small mt-1" style="font-size: 0.68rem;">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Paid ({{ b.payment_method|upper }})
+                                </div>
                             {% endif %}
                         </td>
                     </tr>

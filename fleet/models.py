@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+from datetime import date
 import uuid
 
 class Category(models.Model):
@@ -75,6 +78,60 @@ class Car(models.Model):
         if self.image_url:
             return self.image_url
         return "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=1200&q=80"
+
+    def is_available_between(self, start_date, end_date, exclude_booking_id=None):
+        """
+        Check if vehicle is free of any active bookings during the given date range.
+        An overlap exists if: start_date <= existing.end_date and end_date >= existing.start_date.
+        """
+        if not self.is_available:
+            return False
+        qs = self.bookings.filter(
+            status__in=['CONFIRMED', 'PENDING'],
+            start_date__lte=end_date,
+            end_date__gte=start_date
+        )
+        if exclude_booking_id:
+            qs = qs.exclude(id=exclude_booking_id)
+        return not qs.exists()
+
+    def get_overlapping_booking(self, start_date, end_date, exclude_booking_id=None):
+        """Return the first active booking overlapping with the given date range, or None."""
+        if not self.is_available:
+            return None
+        qs = self.bookings.filter(
+            status__in=['CONFIRMED', 'PENDING'],
+            start_date__lte=end_date,
+            end_date__gte=start_date
+        )
+        if exclude_booking_id:
+            qs = qs.exclude(id=exclude_booking_id)
+        return qs.first()
+
+    def get_upcoming_bookings(self):
+        """Return active reservations for this vehicle from today onwards."""
+        today = date.today()
+        return self.bookings.filter(
+            status__in=['CONFIRMED', 'PENDING'],
+            end_date__gte=today
+        ).order_by('start_date')
+
+    def get_active_assignment_today(self):
+        """Check if this vehicle is currently rented out on an active trip today."""
+        today = date.today()
+        return self.bookings.filter(
+            status__in=['CONFIRMED', 'PENDING'],
+            start_date__lte=today,
+            end_date__gte=today
+        ).first()
+
+    def get_next_upcoming_booking(self):
+        """Return the next upcoming reservation scheduled for this vehicle."""
+        today = date.today()
+        return self.bookings.filter(
+            status__in=['CONFIRMED', 'PENDING'],
+            start_date__gt=today
+        ).order_by('start_date').first()
 
 
 class Driver(models.Model):
@@ -194,15 +251,110 @@ class Booking(models.Model):
     
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='CONFIRMED')
+    
+    # Payment Tracking
+    PAYMENT_STATUS_CHOICES = [
+        ('PAID', 'Paid & Verified'),
+        ('PENDING', 'Payment Pending'),
+        ('FAILED', 'Payment Failed'),
+        ('REFUNDED', 'Refunded'),
+    ]
+
+    PAYMENT_METHOD_CHOICES = [
+        ('card', 'Credit / Debit Card'),
+        ('upi', 'Instant UPI / QR Code'),
+        ('netbanking', 'Net Banking'),
+        ('wallet', 'AutoDrive Concierge Wallet'),
+        ('cash_hub', 'Pay at Central Hub'),
+    ]
+
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='PAID')
+    payment_method = models.CharField(max_length=30, choices=PAYMENT_METHOD_CHOICES, default='card')
+    transaction_id = models.CharField(max_length=50, blank=True, default='')
+    paid_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        super().clean()
+        if self.start_date and self.end_date:
+            if self.end_date <= self.start_date:
+                raise ValidationError({"end_date": "Return date must be after pick-up date."})
+            if hasattr(self, 'car') and self.car and self.status in ['CONFIRMED', 'PENDING']:
+                conflict = self.car.get_overlapping_booking(self.start_date, self.end_date, exclude_booking_id=self.pk)
+                if conflict:
+                    raise ValidationError(
+                        f"Vehicle {self.car.name} is already booked from {conflict.start_date.strftime('%b %d, %Y')} "
+                        f"to {conflict.end_date.strftime('%b %d, %Y')} (#{conflict.booking_ref})."
+                    )
+            if self.drive_mode == 'chauffeur' and self.assigned_driver and self.status in ['CONFIRMED', 'PENDING']:
+                driver_conflict = self.assigned_driver.get_overlapping_booking(self.start_date, self.end_date, exclude_booking_id=self.pk)
+                if driver_conflict:
+                    raise ValidationError(
+                        f"Chauffeur {self.assigned_driver.name} is already reserved from {driver_conflict.start_date.strftime('%b %d, %Y')} "
+                        f"to {driver_conflict.end_date.strftime('%b %d, %Y')} (#{driver_conflict.booking_ref})."
+                    )
 
     def save(self, *args, **kwargs):
         if not self.booking_ref:
             self.booking_ref = f"AD-{uuid.uuid4().hex[:8].upper()}"
+        if not self.transaction_id and self.payment_status == 'PAID':
+            self.transaction_id = f"TXN-{uuid.uuid4().hex[:10].upper()}"
+        if self.payment_status == 'PAID' and not self.paid_at:
+            self.paid_at = timezone.now()
+        self.clean()
         super().save(*args, **kwargs)
+        if self.payment_status == 'PAID':
+            try:
+                Payment.objects.get_or_create(
+                    booking=self,
+                    defaults={
+                        'transaction_id': self.transaction_id or f"TXN-{uuid.uuid4().hex[:10].upper()}",
+                        'payment_method': self.payment_method or 'card',
+                        'amount': self.total_price,
+                        'status': 'SUCCESS',
+                        'card_last_four': '4242',
+                        'card_brand': 'Visa',
+                    }
+                )
+            except Exception:
+                pass
 
     def __str__(self):
         return f"Booking {self.booking_ref} - {self.car.name} by {self.user.username}"
+
+
+class Payment(models.Model):
+    PAYMENT_METHOD_CHOICES = [
+        ('card', 'Credit / Debit Card'),
+        ('upi', 'Instant UPI / QR Code'),
+        ('netbanking', 'Net Banking'),
+        ('wallet', 'AutoDrive Concierge Wallet'),
+        ('cash_hub', 'Pay at Central Hub'),
+    ]
+
+    STATUS_CHOICES = [
+        ('SUCCESS', 'Payment Successful'),
+        ('PENDING', 'Payment Pending'),
+        ('FAILED', 'Payment Failed'),
+        ('REFUNDED', 'Refunded'),
+    ]
+
+    booking = models.OneToOneField(Booking, on_delete=models.CASCADE, related_name="payment_record")
+    transaction_id = models.CharField(max_length=50, unique=True)
+    payment_method = models.CharField(max_length=30, choices=PAYMENT_METHOD_CHOICES, default='card')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='SUCCESS')
+    
+    # Dummy payment metadata
+    card_last_four = models.CharField(max_length=4, blank=True, default='4242')
+    card_brand = models.CharField(max_length=30, blank=True, default='Visa')
+    upi_id = models.CharField(max_length=100, blank=True, default='')
+    bank_name = models.CharField(max_length=100, blank=True, default='')
+    gateway_response = models.CharField(max_length=255, default='Simulated Gateway Approval (HTTP 200 - TEST MODE)')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Payment #{self.transaction_id} (₹{self.amount}) - {self.status}"
 
 
 class Review(models.Model):

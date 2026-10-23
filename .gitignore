@@ -29,3 +29,7 @@ Thumbs.db
 
 # Uploaded media
 media/
+
+# Temporary Office Lock Files & Scratch
+~$*
+scratch/

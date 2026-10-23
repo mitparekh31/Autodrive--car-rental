@@ -12,8 +12,12 @@ urlpatterns = [
     path('compare/', views.compare_cars_view, name='compare'),
     path('my-bookings/', views.my_bookings_view, name='my_bookings'),
     path('booking/<int:booking_id>/cancel/', views.cancel_booking_view, name='cancel_booking'),
+    path('booking/<str:booking_ref>/payment/', views.checkout_payment_view, name='checkout_payment'),
+    path('booking/<str:booking_ref>/process-payment/', views.process_payment_view, name='process_payment'),
+    path('booking/<str:booking_ref>/receipt/', views.payment_receipt_view, name='payment_receipt'),
     path('dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
     path('api/driver-availability/', views.driver_availability_api, name='driver_availability_api'),
+    path('api/car-availability/', views.car_availability_api, name='car_availability_api'),
     
     # Auth
     path('register/', views.register_view, name='register'),

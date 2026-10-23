@@ -1,6 +1,15 @@
 # 🚗 AutoDrive - Luxury Automotive SaaS & Car Rental Platform
 
-AutoDrive is a modern, high-performance Django web application for luxury vehicle rentals. It features real-time guaranteed fleet availability, custom pick-up/drop-off locations, verified customer reviews & star ratings, digital reservation passes with QR codes, and a comprehensive fleet management console with direct image file uploads.
+AutoDrive is a modern, high-performance Django web application for luxury vehicle rentals. It features real-time guaranteed fleet availability, mathematical date range collision prevention, dynamic tiered multi-day discounts, certified chauffeur scheduling, dual-mode Razorpay standard checkout with 3D Secure bank simulation, verified customer reviews, and a comprehensive fleet management console.
+
+---
+
+## 📚 Complete Project Documentation & University Reports
+- 📽️ **Official Academic Presentation (PowerPoint PPTX)**: [AutoDrive_Project_Presentation_3MCA.pptx](file:///e:/CRS/CRS/AutoDrive_Project_Presentation_3MCA.pptx) (Silver Oak University MCA 3rd Semester Minor Project Presentation template with 44 fully adapted slides, draw.io diagrams, screenshots, schema tables, and test cases)
+- 📄 **Official Academic Project Report (Word Document)**: [Report_CRS_AutoDrive.docx](file:///e:/CRS/CRS/Report_CRS_AutoDrive.docx) (Silver Oak University MCA 3rd Semester Minor Project CAM6053C format with all 4 draw.io diagrams, 4 screenshots, 27 tables, and 27 test cases)
+- 📝 **Full Technical Documentation (Markdown)**: [PROJECT_REPORT_CRS.md](file:///e:/CRS/CRS/PROJECT_REPORT_CRS.md) (Complete with draw.io diagrams, Mermaid architecture diagrams, DFDs, ERDs, sequence diagrams, and test results)
+- 📐 **System Architectural Diagrams**: [docs/diagrams/](file:///e:/CRS/CRS/docs/diagrams/) (System Architecture, DFD Level 0, ER Diagram, UML Sequence Diagram)
+- 🖼️ **System Screenshots Directory**: [docs/screenshots/](file:///e:/CRS/CRS/docs/screenshots/) (Homepage Hero, Vehicle Detail & Dynamic Pricing, Razorpay Gateway & Bank Simulator, Fleet Showcase)
 
 ---
 
@@ -11,7 +20,7 @@ The environment and database are already prepared on this machine.
 ### Step 1: Open Terminal / PowerShell
 Open your terminal in the project directory:
 ```powershell
-cd "c:\Z\SOU\Semester 3\CRS"
+cd "e:\CRS\CRS"
 ```
 
 ### Step 2: (Optional) Seed / Reset Fleet Database

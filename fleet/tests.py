@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
-from fleet.models import Category, Car, Booking, Driver
+from django.core.exceptions import ValidationError
+from fleet.models import Category, Car, Booking, Driver, Payment
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -316,6 +317,385 @@ class AutoDriveFleetTests(TestCase):
         data2 = response2.json()
         driver_item2 = next(d for d in data2['drivers'] if d['id'] == self.driver.id)
         self.assertTrue(driver_item2['is_available'])
+
+    def test_car_double_booking_prevention_same_dates(self):
+        """Verify another customer cannot book the same car for the exact same date slot."""
+        customer1 = self.user
+        customer2 = User.objects.create_user(username="customer2", password="password123")
+
+        # Customer 1 books self.car for Nov 10 to Nov 15
+        Booking.objects.create(
+            user=customer1,
+            car=self.car,
+            start_date=date(2026, 11, 10),
+            end_date=date(2026, 11, 15),
+            pickup_time="10:00 AM",
+            pickup_location="Hub",
+            return_location="Hub",
+            driver_name="Customer 1",
+            driver_email="customer1@autodrive.io",
+            driver_phone="+91 98765 43210",
+            daily_rate_at_booking=self.car.daily_rate,
+            num_days=5,
+            subtotal=self.car.daily_rate * 5,
+            total_price=self.car.daily_rate * 5,
+            status="CONFIRMED"
+        )
+
+        # Customer 2 attempts to book the same car for the same dates
+        self.client.login(username="customer2", password="password123")
+        response = self.client.post(f'/car/{self.car.id}/book/', {
+            'start_date': '2026-11-10',
+            'end_date': '2026-11-15',
+            'pickup_location': 'Hub',
+            'return_location': 'Hub',
+            'drive_mode': 'self',
+            'customer_license': 'DL-TEST-999',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Time Slot Unavailable")
+        self.assertContains(response, "already booked")
+        # Customer 2 must NOT have any booking created
+        self.assertEqual(Booking.objects.filter(user=customer2).count(), 0)
+
+    def test_car_double_booking_prevention_overlapping_dates(self):
+        """Verify another customer cannot book the car for overlapping start, end, or inner slots."""
+        customer1 = self.user
+        customer2 = User.objects.create_user(username="customer_overlap", password="password123")
+
+        # Booking active from Nov 10 to Nov 20
+        Booking.objects.create(
+            user=customer1,
+            car=self.car,
+            start_date=date(2026, 11, 10),
+            end_date=date(2026, 11, 20),
+            pickup_time="10:00 AM",
+            pickup_location="Hub",
+            return_location="Hub",
+            driver_name="Customer 1",
+            driver_email="customer1@autodrive.io",
+            driver_phone="+91 98765 43210",
+            daily_rate_at_booking=self.car.daily_rate,
+            num_days=10,
+            subtotal=self.car.daily_rate * 10,
+            total_price=self.car.daily_rate * 10,
+            status="CONFIRMED"
+        )
+
+        self.client.login(username="customer_overlap", password="password123")
+
+        # Attempt 1: Overlaps tail (Nov 18 to Nov 25)
+        res1 = self.client.post(f'/car/{self.car.id}/book/', {
+            'start_date': '2026-11-18',
+            'end_date': '2026-11-25',
+            'pickup_location': 'Hub',
+            'return_location': 'Hub',
+            'drive_mode': 'self',
+        }, follow=True)
+        self.assertContains(res1, "Time Slot Unavailable")
+        self.assertEqual(Booking.objects.filter(user=customer2).count(), 0)
+
+        # Attempt 2: Overlaps head (Nov 05 to Nov 12)
+        res2 = self.client.post(f'/car/{self.car.id}/book/', {
+            'start_date': '2026-11-05',
+            'end_date': '2026-11-12',
+            'pickup_location': 'Hub',
+            'return_location': 'Hub',
+            'drive_mode': 'self',
+        }, follow=True)
+        self.assertContains(res2, "Time Slot Unavailable")
+        self.assertEqual(Booking.objects.filter(user=customer2).count(), 0)
+
+        # Attempt 3: Completely inside (Nov 12 to Nov 17)
+        res3 = self.client.post(f'/car/{self.car.id}/book/', {
+            'start_date': '2026-11-12',
+            'end_date': '2026-11-17',
+            'pickup_location': 'Hub',
+            'return_location': 'Hub',
+            'drive_mode': 'self',
+        }, follow=True)
+        self.assertContains(res3, "Time Slot Unavailable")
+        self.assertEqual(Booking.objects.filter(user=customer2).count(), 0)
+
+    def test_car_booking_succeeds_for_distinct_non_overlapping_slots(self):
+        """Verify another customer CAN book the same car outside of booked time slots."""
+        customer1 = self.user
+        customer2 = User.objects.create_user(username="customer_distinct", password="password123")
+
+        # Customer 1 books Nov 10 to Nov 15
+        Booking.objects.create(
+            user=customer1,
+            car=self.car,
+            start_date=date(2026, 11, 10),
+            end_date=date(2026, 11, 15),
+            pickup_time="10:00 AM",
+            pickup_location="Hub",
+            return_location="Hub",
+            driver_name="Customer 1",
+            driver_email="customer1@autodrive.io",
+            driver_phone="+91 98765 43210",
+            daily_rate_at_booking=self.car.daily_rate,
+            num_days=5,
+            subtotal=self.car.daily_rate * 5,
+            total_price=self.car.daily_rate * 5,
+            status="CONFIRMED"
+        )
+
+        # Customer 2 books Nov 18 to Nov 22 (strictly after customer 1)
+        self.client.login(username="customer_distinct", password="password123")
+        response = self.client.post(f'/car/{self.car.id}/book/', {
+            'start_date': '2026-11-18',
+            'end_date': '2026-11-22',
+            'pickup_location': 'Hub',
+            'return_location': 'Hub',
+            'drive_mode': 'self',
+            'customer_license': 'DL-OK-12345',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Reservation Confirmed")
+        self.assertEqual(Booking.objects.filter(user=customer2).count(), 1)
+
+    def test_car_booking_succeeds_after_cancellation(self):
+        """When an existing booking is cancelled, that slot becomes available again."""
+        customer1 = self.user
+        customer2 = User.objects.create_user(username="customer_rebook", password="password123")
+
+        # Customer 1 books Nov 10 to Nov 15
+        b1 = Booking.objects.create(
+            user=customer1,
+            car=self.car,
+            start_date=date(2026, 11, 10),
+            end_date=date(2026, 11, 15),
+            pickup_time="10:00 AM",
+            pickup_location="Hub",
+            return_location="Hub",
+            driver_name="Customer 1",
+            driver_email="customer1@autodrive.io",
+            driver_phone="+91 98765 43210",
+            daily_rate_at_booking=self.car.daily_rate,
+            num_days=5,
+            subtotal=self.car.daily_rate * 5,
+            total_price=self.car.daily_rate * 5,
+            status="CONFIRMED"
+        )
+
+        # Customer 1 cancels the booking
+        b1.status = 'CANCELLED'
+        b1.save()
+
+        # Customer 2 can now book the exact same slot
+        self.client.login(username="customer_rebook", password="password123")
+        response = self.client.post(f'/car/{self.car.id}/book/', {
+            'start_date': '2026-11-10',
+            'end_date': '2026-11-15',
+            'pickup_location': 'Hub',
+            'return_location': 'Hub',
+            'drive_mode': 'self',
+            'customer_license': 'DL-REBOOK-99',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Reservation Confirmed")
+        self.assertEqual(Booking.objects.filter(user=customer2).count(), 1)
+
+    def test_car_availability_api(self):
+        """Test API endpoint /api/car-availability/ for conflicting and open slots."""
+        # Create active booking for Dec 1 to Dec 5
+        Booking.objects.create(
+            user=self.user,
+            car=self.car,
+            start_date=date(2026, 12, 1),
+            end_date=date(2026, 12, 5),
+            pickup_time="10:00 AM",
+            pickup_location="Hub",
+            return_location="Hub",
+            driver_name="Customer 1",
+            driver_email="customer1@autodrive.io",
+            driver_phone="+91 98765 43210",
+            daily_rate_at_booking=self.car.daily_rate,
+            num_days=4,
+            subtotal=self.car.daily_rate * 4,
+            total_price=self.car.daily_rate * 4,
+            status="CONFIRMED"
+        )
+
+        # Overlapping query
+        resp_conflict = self.client.get(f'/api/car-availability/?car_id={self.car.id}&start_date=2026-12-03&end_date=2026-12-07')
+        self.assertEqual(resp_conflict.status_code, 200)
+        data_conflict = resp_conflict.json()
+        self.assertEqual(data_conflict['status'], 'success')
+        self.assertFalse(data_conflict['is_available'])
+        self.assertIn("Booked", data_conflict['conflict_info'])
+        self.assertGreaterEqual(len(data_conflict['booked_slots']), 1)
+
+        # Free slot query
+        resp_free = self.client.get(f'/api/car-availability/?car_id={self.car.id}&start_date=2026-12-10&end_date=2026-12-15')
+        self.assertEqual(resp_free.status_code, 200)
+        data_free = resp_free.json()
+        self.assertEqual(data_free['status'], 'success')
+        self.assertTrue(data_free['is_available'])
+        self.assertIsNone(data_free['conflict_info'])
+
+    def test_model_clean_validation_prevents_overlap(self):
+        """Test that Booking model clean() raises ValidationError on overlap."""
+        Booking.objects.create(
+            user=self.user,
+            car=self.car,
+            start_date=date(2026, 12, 20),
+            end_date=date(2026, 12, 25),
+            pickup_time="10:00 AM",
+            pickup_location="Hub",
+            return_location="Hub",
+            driver_name="Customer 1",
+            driver_email="customer1@autodrive.io",
+            driver_phone="+91 98765 43210",
+            daily_rate_at_booking=self.car.daily_rate,
+            num_days=5,
+            subtotal=self.car.daily_rate * 5,
+            total_price=self.car.daily_rate * 5,
+            status="CONFIRMED"
+        )
+
+        user2 = User.objects.create_user(username="clean_test_user", password="password123")
+        overlapping_booking = Booking(
+            user=user2,
+            car=self.car,
+            start_date=date(2026, 12, 22),
+            end_date=date(2026, 12, 28),
+            pickup_time="10:00 AM",
+            pickup_location="Hub",
+            return_location="Hub",
+            driver_name="Customer 2",
+            driver_email="customer2@autodrive.io",
+            driver_phone="+91 98765 43210",
+            daily_rate_at_booking=self.car.daily_rate,
+            num_days=6,
+            subtotal=self.car.daily_rate * 6,
+            total_price=self.car.daily_rate * 6,
+            status="CONFIRMED"
+        )
+
+        with self.assertRaises(ValidationError):
+            overlapping_booking.save()
+
+    def test_dummy_payment_card_success(self):
+        """Test successful dummy credit card payment during booking."""
+        self.client.login(username="testdriver", password="password123")
+        response = self.client.post(f'/car/{self.car.id}/book/', {
+            'start_date': '2026-11-20',
+            'end_date': '2026-11-24',
+            'drive_mode': 'self',
+            'payment_method': 'card',
+            'card_number': '4532 8900 1234 8890',
+            'card_name': 'Test Driver',
+            'card_expiry': '12/28',
+            'card_cvv': '889',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Payment of")
+        self.assertContains(response, "Successful")
+        booking = Booking.objects.get(user=self.user, start_date=date(2026, 11, 20))
+        self.assertEqual(booking.status, 'CONFIRMED')
+        self.assertEqual(booking.payment_status, 'PAID')
+        self.assertTrue(booking.transaction_id.startswith('TXN-'))
+
+        # Check Payment record
+        payment = Payment.objects.get(booking=booking)
+        self.assertEqual(payment.status, 'SUCCESS')
+        self.assertEqual(payment.card_last_four, '8890')
+        self.assertEqual(payment.card_brand, 'Visa')
+
+    def test_dummy_payment_upi_success(self):
+        """Test successful dummy UPI payment during booking."""
+        self.client.login(username="testdriver", password="password123")
+        response = self.client.post(f'/car/{self.car.id}/book/', {
+            'start_date': '2026-12-01',
+            'end_date': '2026-12-04',
+            'drive_mode': 'self',
+            'payment_method': 'upi',
+            'upi_id': 'testdriver@okhdfcbank',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Successful via Instant UPI")
+        booking = Booking.objects.get(user=self.user, start_date=date(2026, 12, 1))
+        self.assertEqual(booking.payment_status, 'PAID')
+        self.assertEqual(booking.payment_method, 'upi')
+
+        payment = Payment.objects.get(booking=booking)
+        self.assertEqual(payment.payment_method, 'upi')
+        self.assertEqual(payment.upi_id, 'testdriver@okhdfcbank')
+
+    def test_dummy_payment_decline_simulation_and_retry(self):
+        """Test simulated declined payment, redirect to checkout, and subsequent payment retry."""
+        self.client.login(username="testdriver", password="password123")
+
+        # 1. Booking with simulated card decline
+        response = self.client.post(f'/car/{self.car.id}/book/', {
+            'start_date': '2026-12-10',
+            'end_date': '2026-12-14',
+            'drive_mode': 'self',
+            'payment_method': 'card',
+            'card_number': '4000 0000 0000 0000', # Trigger decline
+            'simulate_payment_action': 'fail',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Payment Declined")
+        booking = Booking.objects.get(user=self.user, start_date=date(2026, 12, 10))
+        self.assertEqual(booking.status, 'PENDING')
+        self.assertEqual(booking.payment_status, 'FAILED')
+
+        # 2. Visit checkout payment portal
+        checkout_page = self.client.get(f'/booking/{booking.booking_ref}/payment/')
+        self.assertEqual(checkout_page.status_code, 200)
+        self.assertContains(checkout_page, "AutoDrive Secure Payment Gateway")
+
+        # 3. Retry payment with valid card
+        retry_resp = self.client.post(f'/booking/{booking.booking_ref}/process-payment/', {
+            'payment_method': 'card',
+            'card_number': '4532 8900 1234 8890',
+            'simulate_payment_action': 'success',
+        }, follow=True)
+
+        self.assertEqual(retry_resp.status_code, 200)
+        self.assertContains(retry_resp, "Successful via Credit / Debit Card")
+
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, 'CONFIRMED')
+        self.assertEqual(booking.payment_status, 'PAID')
+
+    def test_tax_invoice_receipt_view(self):
+        """Test tax invoice and payment receipt rendering."""
+        self.client.login(username="testdriver", password="password123")
+        b = Booking.objects.create(
+            user=self.user,
+            car=self.car,
+            start_date=date(2026, 12, 15),
+            end_date=date(2026, 12, 18),
+            pickup_time="10:00 AM",
+            pickup_location="Hub",
+            return_location="Hub",
+            driver_name="Test Driver",
+            driver_email="test@autodrive.io",
+            driver_phone="+91 98765 43210",
+            daily_rate_at_booking=self.car.daily_rate,
+            num_days=3,
+            subtotal=self.car.daily_rate * 3,
+            total_price=self.car.daily_rate * 3,
+            status="CONFIRMED",
+            payment_status="PAID"
+        )
+
+        response = self.client.get(f'/booking/{b.booking_ref}/receipt/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "TAX INVOICE / RECEIPT")
+        self.assertContains(response, b.booking_ref)
+        self.assertContains(response, b.transaction_id)
+        self.assertContains(response, "PAID & VERIFIED")
 
 
 

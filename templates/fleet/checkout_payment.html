@@ -1,0 +1,665 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Razorpay Secure Checkout - Booking #{{ booking.booking_ref }} | AutoDrive{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Stepper Navigation Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a href="{% url 'my_bookings' %}" class="text-secondary text-decoration-none small hover-info">
+                    <i class="fa-solid fa-arrow-left me-1"></i> My Reservations
+                </a>
+                <span class="text-secondary small">&bull;</span>
+                <span class="badge bg-info text-dark fw-bold">Step 3 of 3: Razorpay Payment</span>
+            </div>
+            <h1 class="h3 text-white fw-bold mb-0 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-info"></i> AutoDrive Secure Payment Gateway
+            </h1>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="rzp-trusted-badge">
+                <i class="fa-solid fa-circle-check"></i> Razorpay Trusted Business
+            </span>
+            <span class="rzp-test-tag">TEST MODE</span>
+            <span class="badge bg-dark border border-secondary text-info px-3 py-2 rounded-pill font-monospace">
+                REF #{{ booking.booking_ref }}
+            </span>
+        </div>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+
+        <!-- ================= LEFT COLUMN: ORDER SUMMARY ================= -->
+        <div class="col-lg-5">
+            <div class="real-gateway-card p-4 position-sticky" style="top: 90px;">
+
+                <!-- Merchant Header -->
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom border-secondary">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rzp-brand-avatar">
+                            <i class="fa-solid fa-car-side"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-white fs-6">AutoDrive Fleet SaaS</div>
+                            <div class="text-secondary" style="font-size: 0.72rem;">Merchant ID: <span class="text-info font-monospace">MID_AD984210</span></div>
+                        </div>
+                    </div>
+                    {% if booking.payment_status == 'PAID' %}
+                    <span class="badge bg-success px-3 py-2 fw-bold text-white"><i class="fa-solid fa-circle-check me-1"></i> Paid</span>
+                    {% elif booking.payment_status == 'FAILED' %}
+                    <span class="badge bg-danger px-3 py-2 fw-bold text-white"><i class="fa-solid fa-circle-xmark me-1"></i> Payment Failed</span>
+                    {% else %}
+                    <span class="badge bg-warning text-dark px-3 py-2 fw-bold"><i class="fa-solid fa-clock me-1"></i> Pending Payment</span>
+                    {% endif %}
+                </div>
+
+                <!-- Total Amount Banner -->
+                <div class="p-3 rounded-3 bg-dark border border-secondary mb-3">
+                    <div class="text-secondary small mb-1">TOTAL AMOUNT DUE</div>
+                    <div class="d-flex justify-content-between align-items-baseline">
+                        <div class="h2 text-white fw-bold mb-0">₹{{ booking.total_price|floatformat:0 }}<span class="fs-6 text-secondary font-monospace">.00</span></div>
+                        <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size: 0.72rem;">INR (Indian Rupee)</span>
+                    </div>
+                </div>
+
+                <!-- Vehicle Info Card -->
+                <div class="d-flex gap-3 align-items-center p-3 rounded-3 bg-dark border border-secondary mb-3">
+                    <div style="width: 80px; height: 60px; flex-shrink: 0;" class="rounded-2 overflow-hidden border border-secondary">
+                        <img src="{{ car.primary_image }}" alt="{{ car.name }}" class="w-100 h-100 object-fit-cover">
+                    </div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <span class="badge bg-primary text-white mb-1" style="font-size: 0.65rem;">{{ car.category.name }}</span>
+                        <div class="text-white fw-bold text-truncate mb-0 fs-6">{{ car.name }}</div>
+                        <div class="text-secondary small">{{ booking.start_date|date:"M d" }} &rarr; {{ booking.end_date|date:"M d, Y" }} ({{ booking.num_days }}d)</div>
+                    </div>
+                </div>
+
+                <!-- Itemized Breakdown -->
+                <div class="p-3 rounded-3 bg-dark border border-secondary mb-3 small">
+                    <div class="d-flex justify-content-between text-secondary mb-2">
+                        <span>Vehicle Tariff (₹{{ booking.daily_rate_at_booking|floatformat:0 }} × {{ booking.num_days }}d):</span>
+                        <span class="text-white fw-semibold">₹{{ booking.subtotal|floatformat:0 }}</span>
+                    </div>
+                    {% if booking.chauffeur_fee > 0 %}
+                    <div class="d-flex justify-content-between text-secondary mb-2">
+                        <span>Chauffeur Service:</span>
+                        <span class="text-warning fw-semibold">+₹{{ booking.chauffeur_fee|floatformat:0 }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex justify-content-between text-secondary mb-2">
+                        <span>VIP Protection / Insurance:</span>
+                        <span class="text-success fw-semibold">Complimentary</span>
+                    </div>
+                    <div class="d-flex justify-content-between text-secondary mb-0">
+                        <span>GST / Taxes (18% included):</span>
+                        <span class="text-white">Included</span>
+                    </div>
+                </div>
+
+                <!-- Real Security Guarantees -->
+                <div class="d-flex flex-column gap-2 text-secondary small" style="font-size: 0.78rem;">
+                    <div><i class="fa-solid fa-lock text-success me-2"></i> <strong>256-Bit SSL:</strong> End-to-end encrypted TLS 1.3 protocol.</div>
+                    <div><i class="fa-solid fa-shield-halved text-info me-2"></i> <strong>PCI-DSS Level 1:</strong> Highest global security certification.</div>
+                    <div><i class="fa-solid fa-rotate-left text-warning me-2"></i> <strong>Free Cancellation:</strong> 100% refund up to 24h before pickup.</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= RIGHT COLUMN: RAZORPAY STANDARD CHECKOUT ================= -->
+        <div class="col-lg-7">
+            <style>
+            .hosted-rzp-modal {
+                border-radius: 16px !important;
+                overflow: hidden !important;
+                border: 1px solid rgba(0, 0, 0, 0.12) !important;
+                box-shadow: 0 25px 65px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+                background: #FFFFFF !important;
+                font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            }
+            .hosted-rzp-header {
+                background: #0C2340 !important;
+                padding: 1.15rem 1.6rem !important;
+                color: #FFFFFF !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+            }
+            .hosted-rzp-split {
+                display: flex !important;
+                flex-direction: row !important;
+                min-height: 440px !important;
+                background: #FFFFFF !important;
+            }
+            .hosted-rzp-sidebar {
+                width: 230px !important;
+                background: #F8FAFC !important;
+                border-right: 1px solid #E2E8F0 !important;
+                padding: 1rem 0 !important;
+                flex-shrink: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+            }
+            .hosted-rzp-nav-item {
+                display: flex !important;
+                align-items: center !important;
+                gap: 0.85rem !important;
+                padding: 0.9rem 1.25rem !important;
+                color: #475569 !important;
+                font-size: 0.92rem !important;
+                font-weight: 600 !important;
+                cursor: pointer !important;
+                transition: all 0.2s ease !important;
+                border-left: 3px solid transparent !important;
+                background: transparent !important;
+            }
+            .hosted-rzp-nav-item:hover {
+                background: #EFF6FF !important;
+                color: #1E40AF !important;
+            }
+            .hosted-rzp-nav-item.active {
+                background: #FFFFFF !important;
+                border-left: 3px solid #3395FF !important;
+                color: #0C2340 !important;
+                font-weight: 700 !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+            }
+            .hosted-rzp-content {
+                flex-grow: 1 !important;
+                padding: 1.5rem 1.75rem !important;
+                background: #FFFFFF !important;
+                color: #0F172A !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+            }
+            </style>
+
+            <div class="hosted-rzp-modal">
+
+                <!-- Razorpay Signature Header -->
+                <div class="hosted-rzp-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rzp-brand-avatar">
+                            <i class="fa-solid fa-car-side"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-white fs-6 mb-1">AutoDrive Fleet SaaS</div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="rzp-trusted-badge"><i class="fa-solid fa-shield-halved"></i> Razorpay Trusted Business</span>
+                                <span class="rzp-test-tag">TEST MODE</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div style="font-size: 0.68rem; text-transform: uppercase; color: #94A3B8; font-weight: 600; letter-spacing: 0.05em;">Amount to Pay</div>
+                        <div class="h4 text-white fw-bold mb-0 font-monospace">₹{{ booking.total_price|floatformat:0 }}</div>
+                    </div>
+                </div>
+
+                <!-- Razorpay Body (Split View) -->
+                <div class="hosted-rzp-split">
+
+                    <!-- Left Navigation -->
+                    <div class="hosted-rzp-sidebar">
+                        <div>
+                            <div class="hosted-rzp-nav-item active" id="hostedTabUpi" onclick="switchHostedRzpTab('upi')">
+                                <i class="fa-solid fa-qrcode text-warning" style="width: 22px;"></i>
+                                <span>UPI / QR</span>
+                            </div>
+                            <div class="hosted-rzp-nav-item" id="hostedTabCard" onclick="switchHostedRzpTab('card')">
+                                <i class="fa-regular fa-credit-card text-info" style="width: 22px;"></i>
+                                <span>Card</span>
+                            </div>
+                            <div class="hosted-rzp-nav-item" id="hostedTabNetbanking" onclick="switchHostedRzpTab('netbanking')">
+                                <i class="fa-solid fa-building-columns text-success" style="width: 22px;"></i>
+                                <span>Netbanking</span>
+                            </div>
+                            <div class="hosted-rzp-nav-item" id="hostedTabWallet" onclick="switchHostedRzpTab('wallet')">
+                                <i class="fa-solid fa-wallet text-primary" style="width: 22px;"></i>
+                                <span>Wallet</span>
+                            </div>
+                        </div>
+
+                        <div class="px-3 py-2 border-top" style="border-color: #E2E8F0 !important;">
+                            <div class="d-flex align-items-center gap-2 mb-1" style="font-size: 0.72rem; color: #64748B;">
+                                <i class="fa-solid fa-lock text-success"></i> 256-bit SSL Encrypted
+                            </div>
+                            <div class="d-flex align-items-center gap-2" style="font-size: 0.72rem; color: #64748B;">
+                                <i class="fa-solid fa-shield-check text-info"></i> PCI-DSS Level 1
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Content Pane -->
+                    <div class="hosted-rzp-content">
+
+                        <!-- FORM -->
+                        <form method="POST" action="{% url 'process_payment' booking.booking_ref %}" id="hostedRzpForm">
+                            {% csrf_token %}
+                            <input type="hidden" name="payment_method" id="hostedPaymentMethod" value="upi">
+                            <input type="hidden" name="simulate_payment_action" id="hostedSimulateAction" value="success">
+
+                            <!-- TAB 1: UPI -->
+                            <div id="hostedPaneUpi" class="hosted-rzp-pane">
+                                <div class="text-center">
+                                    <div class="text-dark small fw-semibold mb-2">Scan QR code using any UPI app</div>
+
+                                    <div class="d-inline-block p-2 rounded-3 bg-white mb-2" style="border: 1.5px solid #E2E8F0; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                                        <svg width="130" height="130" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                            <rect width="100" height="100" fill="#FFFFFF"/>
+                                            <rect x="6" y="6" width="26" height="26" fill="#0C2340" rx="3"/>
+                                            <rect x="10" y="10" width="18" height="18" fill="#FFFFFF" rx="2"/>
+                                            <rect x="14" y="14" width="10" height="10" fill="#3395FF" rx="1"/>
+                                            <rect x="68" y="6" width="26" height="26" fill="#0C2340" rx="3"/>
+                                            <rect x="72" y="10" width="18" height="18" fill="#FFFFFF" rx="2"/>
+                                            <rect x="76" y="14" width="10" height="10" fill="#3395FF" rx="1"/>
+                                            <rect x="6" y="68" width="26" height="26" fill="#0C2340" rx="3"/>
+                                            <rect x="10" y="72" width="18" height="18" fill="#FFFFFF" rx="2"/>
+                                            <rect x="14" y="76" width="10" height="10" fill="#3395FF" rx="1"/>
+                                            <rect x="38" y="8" width="6" height="6" fill="#0C2340"/>
+                                            <rect x="48" y="8" width="8" height="6" fill="#0C2340"/>
+                                            <rect x="38" y="20" width="8" height="6" fill="#0C2340"/>
+                                            <rect x="52" y="20" width="6" height="6" fill="#0C2340"/>
+                                            <circle cx="49" cy="49" r="6" fill="#3395FF"/>
+                                            <rect x="64" y="40" width="8" height="8" fill="#0C2340"/>
+                                            <rect x="76" y="44" width="16" height="6" fill="#0C2340"/>
+                                            <rect x="44" y="64" width="8" height="8" fill="#0C2340"/>
+                                            <rect x="58" y="68" width="16" height="6" fill="#0C2340"/>
+                                            <rect x="78" y="64" width="14" height="14" fill="#0C2340"/>
+                                        </svg>
+                                    </div>
+
+                                    <div class="d-flex justify-content-center gap-2 mb-3">
+                                        <span class="badge bg-light border text-dark" style="font-size: 0.7rem; border-color: #E2E8F0 !important;"><i class="fa-brands fa-google text-primary"></i> GPay</span>
+                                        <span class="badge bg-light border text-dark" style="font-size: 0.7rem; border-color: #E2E8F0 !important;"><i class="fa-solid fa-mobile-screen text-indigo"></i> PhonePe</span>
+                                        <span class="badge bg-light border text-dark" style="font-size: 0.7rem; border-color: #E2E8F0 !important;"><i class="fa-solid fa-wallet text-info"></i> Paytm</span>
+                                        <span class="badge bg-light border text-dark" style="font-size: 0.7rem; border-color: #E2E8F0 !important;"><i class="fa-solid fa-shield-halved text-success"></i> CRED</span>
+                                    </div>
+
+                                    <label class="rzp-input-label text-center mb-1">Or enter Virtual Payment Address (UPI ID):</label>
+                                    <div>
+                                        <input type="text" name="upi_id" id="hostedUpiId" class="rzp-input font-monospace text-center" placeholder="e.g. mobile@paytm" value="{{ user.username }}@okhdfcbank">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TAB 2: CARD -->
+                            <div id="hostedPaneCard" class="hosted-rzp-pane d-none">
+                                <div class="mb-3">
+                                    <label class="rzp-input-label">Card Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border" style="border-color: #CBD5E1 !important;" id="hostedCardBrandIcon">
+                                            <i class="fa-brands fa-cc-visa text-primary"></i>
+                                        </span>
+                                        <input type="text" name="card_number" id="hostedCardNumber" class="rzp-input font-monospace" placeholder="4532 8900 1234 8890" value="4532 8900 1234 8890" maxlength="19" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="rzp-input-label">Expiry (MM/YY)</label>
+                                        <input type="text" name="card_expiry" id="hostedCardExpiry" class="rzp-input font-monospace" placeholder="MM/YY" value="12/28" maxlength="5">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="rzp-input-label">CVV / CVC</label>
+                                        <input type="password" name="card_cvv" id="hostedCardCvv" class="rzp-input font-monospace" placeholder="•••" value="889" maxlength="4">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="rzp-input-label">Cardholder Name</label>
+                                    <input type="text" name="card_name" id="hostedCardName" class="rzp-input" placeholder="Name on Card" value="{{ booking.driver_name|default:user.username }}">
+                                </div>
+
+                                <div class="form-check mb-1">
+                                    <input class="form-check-input" type="checkbox" id="hostedSaveCard" checked>
+                                    <label class="form-check-label text-secondary small" for="hostedSaveCard" style="font-size: 0.74rem;">
+                                        Securely save this card as per RBI tokenization guidelines.
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- TAB 3: NETBANKING -->
+                            <div id="hostedPaneNetbanking" class="hosted-rzp-pane d-none">
+                                <label class="rzp-input-label mb-2">Popular Retail Banks</label>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <div class="rzp-bank-tile active" onclick="selectHostedBank('HDFC Bank', this)">
+                                            <i class="fa-solid fa-building-columns text-primary me-1"></i> HDFC Bank
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="rzp-bank-tile" onclick="selectHostedBank('ICICI Bank', this)">
+                                            <i class="fa-solid fa-building-columns text-warning me-1"></i> ICICI Bank
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="rzp-bank-tile" onclick="selectHostedBank('State Bank of India', this)">
+                                            <i class="fa-solid fa-building-columns text-info me-1"></i> SBI
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="rzp-bank-tile" onclick="selectHostedBank('Axis Bank', this)">
+                                            <i class="fa-solid fa-building-columns text-danger me-1"></i> Axis Bank
+                                        </div>
+                                    </div>
+                                </div>
+                                <label class="rzp-input-label mb-1">Select other retail bank:</label>
+                                <select class="form-select rzp-input" id="hostedBankSelect" onchange="selectHostedBank(this.value, null)">
+                                    <option value="HDFC Bank">HDFC Bank</option>
+                                    <option value="ICICI Bank">ICICI Bank</option>
+                                    <option value="State Bank of India">State Bank of India (SBI)</option>
+                                    <option value="Axis Bank">Axis Bank</option>
+                                    <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
+                                    <option value="Punjab National Bank">Punjab National Bank</option>
+                                    <option value="Bank of Baroda">Bank of Baroda</option>
+                                    <option value="Canara Bank">Canara Bank</option>
+                                </select>
+                                <input type="hidden" name="bank_name" id="hostedBankName" value="HDFC Bank">
+                            </div>
+
+                            <!-- TAB 4: WALLET -->
+                            <div id="hostedPaneWallet" class="hosted-rzp-pane d-none">
+                                <div class="p-3 rounded-3 mb-3 border" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div class="fw-bold text-dark small">VIP Concierge Wallet</div>
+                                        <span class="badge bg-success text-white">₹1,50,000</span>
+                                    </div>
+                                    <div class="text-secondary small" style="font-size: 0.74rem;">1-Click instantaneous debit from pre-allocated member credits.</div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm flex-fill text-dark" style="border-color: #CBD5E1 !important;"><i class="fa-brands fa-amazon text-warning me-1"></i> Amazon Pay</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm flex-fill text-dark" style="border-color: #CBD5E1 !important;"><i class="fa-solid fa-wallet text-info me-1"></i> Paytm</button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- CTA Pay Buttons: Simulator or Real Razorpay SDK -->
+                        <div class="mt-4 pt-3 border-top" style="border-color: #E2E8F0 !important;">
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn-rzp-pay" onclick="openHostedRazorpayBankSimulator()">
+                                    <i class="fa-solid fa-lock"></i>
+                                    <span>Pay ₹{{ booking.total_price|floatformat:0 }} (Sandbox Simulator)</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" onclick="launchHostedRealRazorpay()">
+                                    <i class="fa-solid fa-credit-card"></i> Or Pay via Official Razorpay Popup (checkout.js)
+                                </button>
+                            </div>
+                            <div class="rzp-footer-tag">
+                                Secured by <span>Razorpay</span> &bull; PCI-DSS Level 1 Compliant
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= OFFICIAL RAZORPAY BANK SIMULATOR (TEST MODE / DUMMY TRANSACTIONS) ================= -->
+<div class="modal fade" id="modalHostedRzpBankSimulator" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;">
+        <div class="modal-content rzp-modal-content">
+
+            <!-- Razorpay Simulator Header -->
+            <div class="rzp-header d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rzp-brand-avatar" style="width: 36px; height: 36px; font-size: 1.05rem;">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-white fs-6">Razorpay Bank Simulator</div>
+                        <div style="font-size: 0.7rem; color: #94A3B8;">Test Mode Dummy Transaction Sandbox</div>
+                    </div>
+                </div>
+                <span class="rzp-test-tag">SANDBOX</span>
+            </div>
+
+            <div class="p-4" style="background: #FFFFFF;">
+
+                <!-- Transaction Details Banner -->
+                <div class="p-3 rounded-3 mb-3 small border" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
+                    <div class="d-flex justify-content-between text-secondary mb-1">
+                        <span>Merchant:</span>
+                        <span class="text-dark fw-bold">AutoDrive Fleet SaaS</span>
+                    </div>
+                    <div class="d-flex justify-content-between text-secondary mb-1">
+                        <span>Simulated OTP:</span>
+                        <span class="text-dark fw-bold font-monospace badge bg-light text-dark border">123456</span>
+                    </div>
+                    <div class="d-flex justify-content-between text-secondary mb-1">
+                        <span>Amount:</span>
+                        <span class="text-primary fw-bold font-monospace fs-6">₹{{ booking.total_price|floatformat:0 }}.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between text-secondary mb-0">
+                        <span>Payment Method:</span>
+                        <span class="text-dark fw-semibold font-monospace" id="hostedSimMethodDisplay">UPI / QR</span>
+                    </div>
+                </div>
+
+                <div class="text-dark small fw-bold mb-2">Select Dummy Transaction Outcome:</div>
+
+                <!-- Option 1: Simulate Success -->
+                <div class="rzp-sim-card active-success mb-2" id="hostedSimCardSuccess" onclick="selectHostedSimOutcome('success')">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-circle-check text-success fs-3"></i>
+                            <div>
+                                <div class="text-dark fw-bold small">Success (Simulate Payment Approval)</div>
+                                <div class="text-secondary" style="font-size: 0.74rem;">Issuer bank authorizes funds and generates Payment ID (pay_...)</div>
+                            </div>
+                        </div>
+                        <input type="radio" name="hosted_sim_choice" id="hostedChoiceSuccess" checked class="form-check-input">
+                    </div>
+                </div>
+
+                <!-- Option 2: Simulate Failure -->
+                <div class="rzp-sim-card mb-3" id="hostedSimCardFailure" onclick="selectHostedSimOutcome('failure')">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-circle-xmark text-danger fs-3"></i>
+                            <div>
+                                <div class="text-dark fw-bold small">Failure (Simulate Issuer Decline)</div>
+                                <div class="text-secondary" style="font-size: 0.74rem;">Simulates bank decline / card timeout to test error recovery</div>
+                            </div>
+                        </div>
+                        <input type="radio" name="hosted_sim_choice" id="hostedChoiceFailure" class="form-check-input">
+                    </div>
+                </div>
+
+                <!-- Simulator Action Buttons -->
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-success py-2 fw-bold d-flex align-items-center justify-content-center gap-2" onclick="executeHostedRazorpaySimulator()">
+                        <i class="fa-solid fa-bolt"></i> Complete Simulation
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm py-1 border text-secondary" style="border-color: #CBD5E1 !important;" data-bs-dismiss="modal">
+                        Cancel & Return
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ================= RAZORPAY PROCESSING OVERLAY ================= -->
+<div class="modal fade" id="modalHostedRzpProcessing" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+        <div class="modal-content rzp-modal-content p-4 text-center">
+            <div class="my-4">
+                <div class="spinner-border text-primary mb-3" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
+                <h4 class="h5 fw-bold text-dark mb-2" id="hostedRzpProcTitle">Communicating with Razorpay Gateway...</h4>
+                <p class="text-secondary small mb-0" id="hostedRzpProcSubtitle">Processing test authorization with issuing bank</p>
+            </div>
+            <div class="progress bg-light border mb-2" style="height: 6px; border-color: #E2E8F0 !important;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="hostedRzpProgressBar" style="width: 35%;"></div>
+            </div>
+            <div class="text-secondary small" style="font-size: 0.72rem;">Secured by Razorpay Payments</div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentHostedMethod = 'upi';
+let currentHostedOutcome = 'success';
+
+function switchHostedRzpTab(method) {
+    currentHostedMethod = method;
+    document.querySelectorAll('.hosted-rzp-sidebar .hosted-rzp-nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.hosted-rzp-pane').forEach(p => p.classList.add('d-none'));
+
+    document.getElementById('hostedPaymentMethod').value = method;
+
+    const tabEl = document.getElementById(`hostedTab${method.charAt(0).toUpperCase() + method.slice(1)}`);
+    const paneEl = document.getElementById(`hostedPane${method.charAt(0).toUpperCase() + method.slice(1)}`);
+    if (tabEl) tabEl.classList.add('active');
+    if (paneEl) paneEl.classList.remove('d-none');
+}
+
+function selectHostedBank(name, el) {
+    document.querySelectorAll('#hostedPaneNetbanking .rzp-bank-tile').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+    document.getElementById('hostedBankName').value = name;
+    const select = document.getElementById('hostedBankSelect');
+    if (select && select.value !== name) {
+        select.value = name;
+    }
+}
+
+function launchHostedRealRazorpay() {
+    const customKey = prompt("To launch official Razorpay popup (checkout.js), enter your active Razorpay Test Key ID from dashboard.razorpay.com (e.g. rzp_test_...):\n\n(Leave empty to use built-in Razorpay Sandbox Simulator with 100% active dummy methods)");
+    if (!customKey) {
+        openHostedRazorpayBankSimulator();
+        return;
+    }
+
+    if (typeof Razorpay === 'undefined') {
+        alert("Razorpay checkout.js could not be loaded from CDN (check internet connection). Falling back to built-in Sandbox Simulator.");
+        openHostedRazorpayBankSimulator();
+        return;
+    }
+
+    const rzpOptions = {
+        "key": customKey,
+        "amount": Math.round({{ booking.total_price|floatformat:0 }} * 100),
+        "currency": "INR",
+        "name": "AutoDrive Fleet SaaS",
+        "description": "Invoice #{{ booking.booking_ref }} - {{ booking.car.name|escapejs }}",
+        "image": "https://cdn.razorpay.com/static/assets/logo/rzp.png",
+        "handler": function (response) {
+            document.getElementById('hostedSimulateAction').value = 'success';
+            document.getElementById('hostedRzpForm').submit();
+        },
+        "prefill": {
+            "name": "{{ booking.driver_name|default:user.username|escapejs }}",
+            "email": "{{ user.email|default:'customer@autodrive.com'|escapejs }}",
+            "contact": "9876543210"
+        },
+        "theme": {
+            "color": "#3395FF"
+        },
+        "modal": {
+            "ondismiss": function() {
+                setTimeout(() => {
+                    openHostedRazorpayBankSimulator();
+                }, 200);
+            }
+        }
+    };
+
+    try {
+        const rzp = new Razorpay(rzpOptions);
+        rzp.on('payment.failed', function (response) {
+            document.getElementById('hostedSimulateAction').value = 'fail';
+            document.getElementById('hostedCardNumber').value = '4000 0000 0000 0000';
+            document.getElementById('hostedRzpForm').submit();
+        });
+        rzp.open();
+    } catch (err) {
+        console.error("Razorpay popup error:", err);
+        openHostedRazorpayBankSimulator();
+    }
+}
+
+function openHostedRazorpayBankSimulator() {
+    const dispEl = document.getElementById('hostedSimMethodDisplay');
+    if (dispEl) {
+        if (currentHostedMethod === 'card') dispEl.textContent = 'Card (Visa / Mastercard)';
+        else if (currentHostedMethod === 'upi') dispEl.textContent = 'UPI / QR (Instant)';
+        else if (currentHostedMethod === 'netbanking') dispEl.textContent = 'NetBanking (' + document.getElementById('hostedBankName').value + ')';
+        else dispEl.textContent = 'VIP Concierge Wallet';
+    }
+
+    const simModal = new bootstrap.Modal(document.getElementById('modalHostedRzpBankSimulator'));
+    simModal.show();
+}
+
+function selectHostedSimOutcome(outcome) {
+    currentHostedOutcome = outcome;
+    const cardSuccess = document.getElementById('hostedSimCardSuccess');
+    const cardFailure = document.getElementById('hostedSimCardFailure');
+    const rSuccess = document.getElementById('hostedChoiceSuccess');
+    const rFailure = document.getElementById('hostedChoiceFailure');
+
+    if (outcome === 'success') {
+        cardSuccess.className = 'rzp-sim-card active-success mb-2';
+        cardFailure.className = 'rzp-sim-card mb-3';
+        rSuccess.checked = true;
+    } else {
+        cardSuccess.className = 'rzp-sim-card mb-2';
+        cardFailure.className = 'rzp-sim-card active-failure mb-3';
+        rFailure.checked = true;
+    }
+}
+
+function executeHostedRazorpaySimulator() {
+    const simModalEl = document.getElementById('modalHostedRzpBankSimulator');
+    const simInst = bootstrap.Modal.getInstance(simModalEl);
+    if (simInst) simInst.hide();
+
+    if (currentHostedOutcome === 'failure') {
+        document.getElementById('hostedSimulateAction').value = 'fail';
+        document.getElementById('hostedCardNumber').value = '4000 0000 0000 0000';
+    } else {
+        document.getElementById('hostedSimulateAction').value = 'success';
+    }
+
+    const procModal = new bootstrap.Modal(document.getElementById('modalHostedRzpProcessing'));
+    procModal.show();
+
+    const title = document.getElementById('hostedRzpProcTitle');
+    const sub = document.getElementById('hostedRzpProcSubtitle');
+    const bar = document.getElementById('hostedRzpProgressBar');
+
+    setTimeout(() => {
+        if (bar) bar.style.width = '70%';
+        if (title) title.textContent = 'Verifying Bank Authorization...';
+        if (sub) sub.textContent = 'Razorpay Test Mode Switch Handshake';
+    }, 500);
+
+    setTimeout(() => {
+        if (bar) bar.style.width = '100%';
+        if (currentHostedOutcome === 'success') {
+            if (title) title.innerHTML = '<span class="text-success"><i class="fa-solid fa-circle-check me-1"></i> Payment Successful!</span>';
+            if (sub) sub.textContent = 'Payment ID: pay_' + Math.random().toString(36).substring(2, 12).toUpperCase();
+        } else {
+            if (title) title.innerHTML = '<span class="text-danger"><i class="fa-solid fa-circle-xmark me-1"></i> Payment Failed</span>';
+            if (sub) sub.textContent = 'Simulated issuer decline (Error Code: BAD_REQUEST)';
+        }
+    }, 1100);
+
+    setTimeout(() => {
+        document.getElementById('hostedRzpForm').submit();
+    }, 1600);
+}
+</script>
+{% endblock %}

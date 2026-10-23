@@ -18,8 +18,11 @@
     <!-- Google Fonts -->
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap">
-    <!-- Custom Glassmorphism Theme CSS -->
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <!-- Custom Glassmorphism Theme CSS (with cache buster) -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=5.0">
+
+    <!-- Official Razorpay Checkout JS SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     {% block extra_head %}{% endblock %}
 </head>
